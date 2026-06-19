@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --ardor-orange: #e87425;
+  --ardor-black: #141414;
+  --ardor-surface: #1e1e1e;
+  --background: #141414;
+  --foreground: #ffffff;
+  --card: #1e1e1e;
+  --border: #2a2a2a;
+  --muted: #888888;
 }
 
 @theme inline {
+  --color-ardor-orange: var(--ardor-orange);
+  --color-ardor-black: var(--ardor-black);
+  --color-ardor-surface: var(--ardor-surface);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  border-color: var(--border);
+}
+
+@keyframes winner-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(232, 116, 37, 0.35); }
+  50% { box-shadow: 0 0 30px rgba(232, 116, 37, 0.65), 0 0 50px rgba(232, 116, 37, 0.2); }
 }
