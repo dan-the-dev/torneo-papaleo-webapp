@@ -19,6 +19,24 @@ export default async function AdminDashboard() {
 
   return (
     <div>
+      <div className="flex items-start justify-between gap-4 bg-[#e87425]/10 border border-[#e87425]/30 rounded-xl px-4 py-3 mb-6">
+        <div className="flex items-center gap-3">
+          <span className="text-lg">⚙️</span>
+          <div>
+            <p className="text-sm font-semibold text-white">Area amministrativa</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              Le modifiche sono applicate immediatamente al sito pubblico.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/"
+          className="flex-shrink-0 text-xs text-[#e87425] hover:text-white transition-colors pt-0.5"
+        >
+          Vai al sito →
+        </Link>
+      </div>
+
       <h1 className="text-2xl font-bold text-white mb-6">Dashboard</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

@@ -30,9 +30,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               ))}
             </nav>
             <div className="flex items-center gap-3">
-              <Link href="/" className="text-xs text-[var(--muted)] hover:text-white transition-colors">
-                ← Sito
-              </Link>
               <form action={logoutAction}>
                 <button
                   type="submit"
