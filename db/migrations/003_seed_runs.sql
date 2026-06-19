@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS seed_runs (
+  name TEXT PRIMARY KEY,
+  executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

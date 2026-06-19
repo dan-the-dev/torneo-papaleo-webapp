@@ -8,6 +8,16 @@ async function seed() {
   try {
     await client.query('BEGIN');
 
+    // Guard: skip if already applied
+    const { rowCount } = await client.query(
+      "SELECT 1 FROM seed_runs WHERE name = 'base'"
+    );
+    if (rowCount && rowCount > 0) {
+      await client.query('ROLLBACK');
+      console.log('Base seed already applied, skipping.');
+      return;
+    }
+
     // Reset application data
     await client.query('DELETE FROM match_events');
     await client.query('DELETE FROM knockout_slots');
@@ -36,7 +46,6 @@ async function seed() {
 
     // Insert teams + players
     const teamIds: Record<string, number> = {};
-    const playerIds: Record<string, number[]> = {};
     for (const team of TEAMS) {
       const gid = groupIds[team.group];
       if (!gid) throw new Error(`Group ${team.group} not found`);
@@ -48,14 +57,12 @@ async function seed() {
       const teamId = rows[0]?.id;
       if (!teamId) throw new Error(`Failed to insert team ${team.name}`);
       teamIds[team.name] = teamId;
-      playerIds[team.name] = [];
 
       for (const player of team.players) {
-        const { rows: pr } = await client.query<{ id: number }>(
-          'INSERT INTO players (team_id, name, number) VALUES ($1, $2, $3) RETURNING id',
+        await client.query(
+          'INSERT INTO players (team_id, name, number) VALUES ($1, $2, $3)',
           [teamId, player.name, player.number]
         );
-        if (pr[0]) playerIds[team.name]?.push(pr[0].id);
       }
     }
 
@@ -82,6 +89,9 @@ async function seed() {
         [m.round, m.matchNumber, m.scheduledAt]
       );
     }
+
+    // Mark seed as applied
+    await client.query("INSERT INTO seed_runs (name) VALUES ('base')");
 
     await client.query('COMMIT');
     console.log('Base seed complete.');
