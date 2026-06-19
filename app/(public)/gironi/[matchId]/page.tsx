@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getMatchById } from '@/db/queries/matches';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
 import type { EventType } from '@/types/tournament';
 
 function formatDateTime(date: Date): string {
@@ -63,11 +62,8 @@ export default async function MatchDetailPage({
         <div className="grid grid-cols-3 items-center gap-4">
           {/* Home team */}
           <div className="text-center">
-            <div
-              className="w-10 h-10 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_home.color_primary }}
-            />
-            <p className="font-bold text-white text-sm">{match.team_home.name}</p>
+            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <p className="font-bold text-[#e87425] text-sm">{match.team_home.name}</p>
             <p className="text-xs text-[var(--muted)] mt-0.5">{match.team_home.short_name}</p>
           </div>
 
@@ -93,10 +89,7 @@ export default async function MatchDetailPage({
 
           {/* Away team */}
           <div className="text-center">
-            <div
-              className="w-10 h-10 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_away.color_primary }}
-            />
+            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-white/20 border border-white/20" />
             <p className="font-bold text-white text-sm">{match.team_away.name}</p>
             <p className="text-xs text-[var(--muted)] mt-0.5">{match.team_away.short_name}</p>
           </div>
@@ -131,14 +124,6 @@ export default async function MatchDetailPage({
                   </div>
                   <div className="text-lg">{eventIcons[event.type]}</div>
                   <div className={`flex items-center gap-2 ${isHome ? '' : 'flex-row-reverse'}`}>
-                    {event.player && (
-                      <PlayerAvatar
-                        name={event.player.name}
-                        colorPrimary={event.team.color_primary}
-                        colorSecondary={event.team.color_secondary}
-                        size={28}
-                      />
-                    )}
                     <div className={isHome ? 'text-left' : 'text-right'}>
                       <p className="text-sm font-medium text-white">
                         {event.player?.name ?? 'N/D'}
@@ -162,7 +147,7 @@ export default async function MatchDetailPage({
           ].map(({ team, events: tevs }) => (
             <div key={team.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: team.color_primary }} />
+                <div className={`w-3 h-3 rounded-full ${team.id === match.team_home_id ? 'bg-[#e87425]' : 'bg-white/60'}`} />
                 <p className="text-sm font-bold text-white">{team.short_name}</p>
               </div>
               {tevs.length === 0 ? (

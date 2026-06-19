@@ -1,47 +1,50 @@
 import { getTopScorers } from '@/db/queries/players';
 import { getLiveMatches } from '@/db/queries/matches';
-import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
 import { BackToTop } from '@/components/ui/BackToTop';
 import type { TopScorer } from '@/types/tournament';
 
 function ScorerRow({ scorer, rank, isLive }: { scorer: TopScorer; rank: number; isLive: boolean }) {
+  const isFirst = rank === 1;
   return (
     <div
-      className={`flex items-center gap-3 py-3 border-b border-[var(--border)]/50 last:border-0 ${isLive ? 'pl-1' : ''}`}
-      style={isLive ? {
-        borderLeft: `3px solid ${scorer.team.color_primary}`,
-        backgroundColor: `${scorer.team.color_primary}12`,
-      } : undefined}
+      className={`flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0 ${
+        isFirst
+          ? 'bg-[#e87425]'
+          : rank % 2 === 0
+          ? 'bg-[#1a1a1a]'
+          : 'bg-[#141414]'
+      }`}
     >
       <div className="w-6 text-center flex-shrink-0">
-        <span className={`text-sm font-bold ${rank <= 3 ? 'text-[#e87425]' : 'text-[var(--muted)]'}`}>
+        <span className={`text-sm font-bold ${isFirst ? 'text-[#141414]' : rank <= 3 ? 'text-[#e87425]' : 'text-[var(--muted)]'}`}>
           {rank}
         </span>
       </div>
-      <PlayerAvatar
-        name={scorer.player.name}
-        colorPrimary={scorer.team.color_primary}
-        colorSecondary={scorer.team.color_secondary}
-        size={36}
-      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-semibold text-white text-sm truncate">{scorer.player.name}</p>
+          <p className={`font-semibold text-sm truncate ${isFirst ? 'text-[#141414]' : 'text-white'}`}>
+            {scorer.player.name}
+          </p>
           {isLive && (
-            <span className="inline-flex items-center gap-1 bg-[#e87425]/15 text-[#e87425] border border-[#e87425]/30 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#e87425] animate-pulse" />
+            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap flex-shrink-0 border ${
+              isFirst
+                ? 'bg-[#141414]/20 text-[#141414] border-[#141414]/30'
+                : 'bg-[#e87425]/15 text-[#e87425] border-[#e87425]/30'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isFirst ? 'bg-[#141414]' : 'bg-[#e87425]'}`} />
               LIVE
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: scorer.team.color_primary }} />
-          <p className="text-xs text-[var(--muted)] truncate">{scorer.team.name}</p>
-        </div>
+        <p className={`text-sm font-semibold truncate mt-0.5 ${isFirst ? 'text-[#141414]/75' : 'text-[var(--muted)]'}`}>
+          {scorer.team.name}
+        </p>
       </div>
       <div className="flex-shrink-0 text-right">
-        <span className="text-2xl font-bold text-white tabular-nums">{scorer.goals}</span>
-        <p className="text-xs text-[var(--muted)] mt-0.5">gol</p>
+        <span className={`text-2xl font-bold tabular-nums ${isFirst ? 'text-[#141414]' : 'text-white'}`}>
+          {scorer.goals}
+        </span>
+        <p className={`text-xs mt-0.5 ${isFirst ? 'text-[#141414]/75' : 'text-[var(--muted)]'}`}>gol</p>
       </div>
     </div>
   );
@@ -70,7 +73,7 @@ export default async function MarcatoriPage() {
           <div className="px-4 py-3 border-b border-[var(--border)]">
             <h2 className="font-bold text-white">⚽ Classifica marcatori</h2>
           </div>
-          <div className="px-4">
+          <div>
             {scorers.map((s, i) => (
               <ScorerRow
                 key={s.player.id}

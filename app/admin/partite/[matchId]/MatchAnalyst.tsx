@@ -78,8 +78,7 @@ function PlayerRow({
           type="button"
           onClick={handleGoal}
           disabled={isPending}
-          className="flex items-center gap-1.5 min-h-[44px] px-3 text-sm font-semibold text-white hover:opacity-90 active:opacity-75 disabled:opacity-50 rounded-lg transition-opacity shrink-0"
-          style={{ backgroundColor: team.color_primary }}
+          className={`flex items-center gap-1.5 min-h-[44px] px-3 text-sm font-semibold text-white hover:opacity-90 active:opacity-75 disabled:opacity-50 rounded-lg transition-opacity shrink-0 ${team.id === homeTeamId ? 'bg-[#e87425]' : 'bg-[#141414] border border-[var(--border)]'}`}
         >
           <span>⚽</span>
           <span>{isPending ? '…' : 'Goal'}</span>
@@ -216,17 +215,8 @@ export function MatchAnalyst({
 
       {/* ─── Left column: home team (mobile: 2nd) ────────────────── */}
       <div className="flex flex-col min-h-0 order-2 lg:order-1 border-b border-[var(--border)] lg:border-b-0 lg:border-r">
-        <div
-          className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4"
-          style={{
-            borderLeftColor: match.team_home.color_primary,
-            backgroundColor: `${match.team_home.color_primary}18`,
-          }}
-        >
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: match.team_home.color_primary }}
-          />
+        <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-[#e87425] bg-[#e87425]/10">
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#e87425]" />
           <h2 className="font-bold text-white text-sm truncate">
             {match.team_home.name}
           </h2>
@@ -375,21 +365,17 @@ export function MatchAnalyst({
             <div className="space-y-1">
               {sortedEvents.map((event) => {
                 const isHome = event.team_id === match.team_home_id;
-                const teamColor = event.team?.color_primary ?? '#888';
                 return (
                   <div
                     key={event.id}
                     className={`flex items-start gap-2 py-1 px-1 rounded hover:bg-white/5 transition-colors ${isHome ? '' : 'flex-row-reverse'}`}
                   >
-                    <div
-                      className="w-0.5 self-stretch rounded-full shrink-0 mt-0.5 mb-0.5"
-                      style={{ backgroundColor: teamColor }}
-                    />
+                    <div className={`w-0.5 self-stretch rounded-full shrink-0 mt-0.5 mb-0.5 ${isHome ? 'bg-[#e87425]' : 'bg-white/40'}`} />
                     <div className={`flex-1 min-w-0 ${isHome ? 'text-left' : 'text-right'}`}>
                       <p className="text-xs text-white font-medium leading-tight truncate">
                         {event.player?.name ?? '—'}
                       </p>
-                      <p className="text-xs leading-tight truncate" style={{ color: teamColor }}>
+                      <p className={`text-xs leading-tight truncate ${isHome ? 'text-[#e87425]' : 'text-white/50'}`}>
                         {event.team?.name ?? ''}
                       </p>
                     </div>
@@ -441,17 +427,8 @@ export function MatchAnalyst({
 
       {/* ─── Right column: away team (mobile: 3rd) ───────────────── */}
       <div className="flex flex-col min-h-0 order-3">
-        <div
-          className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4"
-          style={{
-            borderLeftColor: match.team_away.color_primary,
-            backgroundColor: `${match.team_away.color_primary}18`,
-          }}
-        >
-          <div
-            className="w-2.5 h-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: match.team_away.color_primary }}
-          />
+        <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-white/30 bg-[#141414]">
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-white/60" />
           <h2 className="font-bold text-white text-sm truncate">
             {match.team_away.name}
           </h2>

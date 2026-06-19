@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getLiveMatches, getNextScheduledMatch, getMatchesToday, getLiveMatchGoals, type LiveGoal } from '@/db/queries/matches';
 import { getPodiumData, type PodiumData } from '@/db/queries/podium';
 import { getTournamentState } from '@/lib/tournament';
-import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
 import { MatchCard } from '@/components/ui/MatchCard';
 import type { MatchWithTeams } from '@/types/tournament';
 
@@ -36,11 +35,8 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
 
         <div className="flex items-center gap-4">
           <div className="flex-1 text-center min-w-0">
-            <div
-              className="w-5 h-5 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_home.color_primary }}
-            />
-            <p className="font-bold text-white text-base leading-tight">{match.team_home.name}</p>
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <p className="font-bold text-[#e87425] text-base leading-tight">{match.team_home.name}</p>
           </div>
           <div className="flex-shrink-0 text-center">
             <p className="text-4xl font-extrabold text-white tabular-nums tracking-tight">
@@ -48,10 +44,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
             </p>
           </div>
           <div className="flex-1 text-center min-w-0">
-            <div
-              className="w-5 h-5 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_away.color_primary }}
-            />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-white/60" />
             <p className="font-bold text-white text-base leading-tight">{match.team_away.name}</p>
           </div>
         </div>
@@ -61,10 +54,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
             <div className="flex-1 space-y-1">
               {homeGoals.map((g, i) => (
                 <div key={i} className="flex items-center gap-1.5">
-                  <span
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: match.team_home.color_primary }}
-                  />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#e87425]" />
                   <span className="text-[11px] text-white/80 leading-tight truncate">
                     {g.player_name ?? '—'}{' '}
                     <span className="text-white/40">({g.team_short_name})</span>
@@ -79,10 +69,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
                     {g.player_name ?? '—'}{' '}
                     <span className="text-white/40">({g.team_short_name})</span>
                   </span>
-                  <span
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: match.team_away.color_primary }}
-                  />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-white/60" />
                 </div>
               ))}
             </div>
@@ -115,20 +102,14 @@ function NextMatchCard({ match }: { match: MatchWithTeams }) {
         </p>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1 text-center min-w-0">
-            <div
-              className="w-5 h-5 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_home.color_primary }}
-            />
-            <p className="font-bold text-white">{match.team_home.name}</p>
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <p className="font-bold text-[#e87425]">{match.team_home.name}</p>
           </div>
           <div className="flex-shrink-0 text-center">
             <p className="text-xl font-bold text-[var(--muted)]">vs</p>
           </div>
           <div className="flex-1 text-center min-w-0">
-            <div
-              className="w-5 h-5 rounded-full mx-auto mb-2"
-              style={{ backgroundColor: match.team_away.color_primary }}
-            />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-white/60" />
             <p className="font-bold text-white">{match.team_away.name}</p>
           </div>
         </div>
@@ -146,10 +127,7 @@ function TeamPodium({ podium }: { podium: PodiumData }) {
       {/* 2nd place */}
       <div className="flex-1 flex flex-col items-center">
         <span className="text-2xl mb-2">🥈</span>
-        <div
-          className="w-9 h-9 rounded-full mb-2 ring-1 ring-white/10"
-          style={{ backgroundColor: podium.second.color_primary }}
-        />
+        <div className="w-9 h-9 rounded-full mb-2 ring-1 ring-white/20 bg-[var(--border)]" />
         <p className="text-xs font-bold text-white text-center leading-tight px-1 mb-4">
           {podium.second.name}
         </p>
@@ -161,10 +139,7 @@ function TeamPodium({ podium }: { podium: PodiumData }) {
       {/* 1st place */}
       <div className="flex-1 flex flex-col items-center">
         <span className="text-3xl mb-2">🏆</span>
-        <div
-          className="w-10 h-10 rounded-full mb-2 ring-2 ring-[#e87425]/60"
-          style={{ backgroundColor: podium.first.color_primary }}
-        />
+        <div className="w-10 h-10 rounded-full mb-2 ring-2 ring-[#e87425]/60 bg-[#e87425]" />
         <p className="text-sm font-extrabold text-white text-center leading-tight px-1 mb-1">
           {podium.first.name}
         </p>
@@ -180,10 +155,7 @@ function TeamPodium({ podium }: { podium: PodiumData }) {
       {/* 3rd place */}
       <div className="flex-1 flex flex-col items-center">
         <span className="text-2xl mb-2">🥉</span>
-        <div
-          className="w-9 h-9 rounded-full mb-2 ring-1 ring-white/10"
-          style={{ backgroundColor: podium.third?.color_primary ?? '#2a2a2a' }}
-        />
+        <div className="w-9 h-9 rounded-full mb-2 ring-1 ring-white/20 bg-[var(--border)]" />
         <p className="text-xs font-bold text-white text-center leading-tight px-1 mb-4">
           {podium.third?.name ?? 'Da definire'}
         </p>
@@ -211,18 +183,9 @@ function TopScorers({ scorers }: { scorers: PodiumData['topScorers'] }) {
             className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]/50 last:border-0"
           >
             <span className="text-lg w-6 text-center">{medals[i]}</span>
-            <PlayerAvatar
-              name={s.playerName}
-              colorPrimary={s.teamColorPrimary}
-              colorSecondary={s.teamColorSecondary}
-              size={36}
-            />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">{s.playerName}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: s.teamColorPrimary }} />
-                <p className="text-xs text-[var(--muted)] truncate">{s.teamName}</p>
-              </div>
+              <p className="text-xs text-[var(--muted)] truncate mt-0.5">{s.teamName}</p>
             </div>
             <div className="flex-shrink-0 text-right">
               <span className={`text-xl font-bold tabular-nums ${i === 0 ? 'text-[#e87425]' : 'text-white'}`}>
