@@ -2,9 +2,17 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import pool from './client';
+import { Pool } from 'pg';
 
 async function migrate() {
+  const connectionString = process.env['DATABASE_URL'];
+  if (!connectionString) throw new Error('DATABASE_URL is not set');
+
+  const pool = new Pool({
+    connectionString,
+    ssl: process.env['NODE_ENV'] === 'production' ? { rejectUnauthorized: false } : false,
+  });
+
   const client = await pool.connect();
   try {
     await client.query(`
