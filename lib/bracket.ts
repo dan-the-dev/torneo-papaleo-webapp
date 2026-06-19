@@ -147,7 +147,7 @@ async function computeGroupRankings(
      FROM matches m
      JOIN groups g ON g.id = m.group_id
      WHERE m.round = 'group'
-       AND m.status = 'finished'
+       AND m.status IN ('finished', 'live')
        AND m.score_home IS NOT NULL
        AND m.score_away IS NOT NULL`,
   );

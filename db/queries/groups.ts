@@ -16,7 +16,7 @@ export async function getGroupStandings(groupId: number): Promise<GroupStanding[
 
   const { rows: matches } = await pool.query<Match>(
     `SELECT * FROM matches
-     WHERE group_id = $1 AND status = 'finished'`,
+     WHERE group_id = $1 AND status IN ('finished', 'live')`,
     [groupId]
   );
 
