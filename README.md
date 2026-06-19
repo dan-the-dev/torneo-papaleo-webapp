@@ -29,6 +29,16 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Database migrations
+
+Migrations run automatically on every Vercel deploy via the custom `buildCommand` in `vercel.json` (`npm run db:migrate && next build`). No manual step is needed — the migration script is idempotent and safe to run repeatedly.
+
+For local development, set `DATABASE_URL` in `.env.local` and run:
+
+```bash
+npm run db:migrate
+```
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

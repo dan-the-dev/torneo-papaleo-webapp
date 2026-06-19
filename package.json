@@ -6,12 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:migrate": "npx tsx --env-file .env.local db/migrate.ts",
+    "db:migrate": "npx tsx db/migrate.ts",
     "db:seed:base": "npx tsx --env-file .env.local db/seeds/seed-base.ts",
     "db:seed:groups-done": "npx tsx --env-file .env.local db/seeds/seed-groups-done.ts",
     "db:seed:finished": "npx tsx --env-file .env.local db/seeds/seed-finished.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "bcryptjs": "^3.0.3",
     "iron-session": "^8.0.4",
     "jose": "^6.2.3",
