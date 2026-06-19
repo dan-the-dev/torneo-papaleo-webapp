@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -34,7 +35,7 @@ function NavLinks({
           className={`flex items-center px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-colors ${
             isActive(l.href, pathname)
               ? 'bg-[#e87425] text-white'
-              : 'text-[var(--muted)] hover:text-white hover:bg-white/5'
+              : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--border)]'
           }`}
         >
           {l.label}
@@ -55,12 +56,13 @@ export function Sidebar() {
   return (
     <>
       {/* ─── Desktop sidebar ─────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-[220px] bg-[#141414] border-r border-[var(--border)] z-40">
-        <div className="px-5 py-4 border-b border-[var(--border)]">
+      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-[220px] bg-[var(--background)] border-r border-[var(--border)] z-40">
+        <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <Link href="/">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="Ardor Bollate" className="h-10 w-auto" />
           </Link>
+          <ThemeToggle />
         </div>
         <NavLinks pathname={pathname} />
         <div className="px-5 py-4 border-t border-[var(--border)]">
@@ -71,15 +73,17 @@ export function Sidebar() {
       </aside>
 
       {/* ─── Mobile top bar ──────────────────────────────────── */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#141414] border-b border-[var(--border)] flex items-center justify-between px-4 h-14">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--background)] border-b border-[var(--border)] flex items-center justify-between px-4 h-14">
         <Link href="/" onClick={close}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Ardor Bollate" className="h-8 w-auto" />
         </Link>
-        <button
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
           onClick={() => setIsOpen(true)}
           aria-label="Apri menu"
-          className="p-2 text-[var(--muted)] hover:text-white transition-colors"
+          className="p-2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
         >
           <svg
             width="22"
@@ -94,6 +98,7 @@ export function Sidebar() {
             <line x1="3" y1="16" x2="19" y2="16" />
           </svg>
         </button>
+        </div>
       </header>
 
       {/* ─── Mobile drawer + backdrop ────────────────────────── */}
@@ -103,7 +108,7 @@ export function Sidebar() {
             className="md:hidden fixed inset-0 z-50 bg-black/60"
             onClick={close}
           />
-          <aside className="md:hidden flex flex-col fixed left-0 top-0 h-full w-[220px] z-50 bg-[#141414] border-r border-[var(--border)]">
+          <aside className="md:hidden flex flex-col fixed left-0 top-0 h-full w-[220px] z-50 bg-[var(--background)] border-r border-[var(--border)]">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
               <Link href="/" onClick={close}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

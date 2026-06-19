@@ -9,7 +9,7 @@ const adminLinks = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="admin-dark flex flex-col min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <header className="bg-[var(--card)] border-b border-[var(--border)]">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex items-center gap-3 py-3">

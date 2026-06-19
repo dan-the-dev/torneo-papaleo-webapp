@@ -9,6 +9,35 @@
   --card: #1e1e1e;
   --border: #2a2a2a;
   --muted: #888888;
+  /* semantic theme vars */
+  --bg-page: #141414;
+  --bg-surface: #1e1e1e;
+  --bg-card: #252525;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+}
+
+:root.light {
+  --background: #ffffff;
+  --foreground: #141414;
+  --card: #f1f1f1;
+  --border: #d0d0d0;
+  --muted: #555555;
+  --ardor-surface: #f1f1f1;
+  --bg-page: #ffffff;
+  --bg-surface: #f1f1f1;
+  --bg-card: #f1f1f1;
+  --text-primary: #141414;
+  --text-secondary: #555555;
+}
+
+/* Admin always dark regardless of user theme preference */
+.admin-dark {
+  --background: #141414;
+  --foreground: #ffffff;
+  --card: #1e1e1e;
+  --border: #2a2a2a;
+  --muted: #888888;
 }
 
 @theme inline {
