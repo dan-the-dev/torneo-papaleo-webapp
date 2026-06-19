@@ -12,6 +12,11 @@ export const USERS: AppUser[] = [
     role: 'admin',
     passwordEnvVar: 'ADMIN_PASSWORD',
   },
+  {
+    email: 'matteo.baldo999@gmail.com',
+    role: 'admin',
+    passwordEnvVar: 'ADMIN_PASSWORD_2',
+  },
 ];
 
 export function findUserByEmail(email: string): AppUser | undefined {
