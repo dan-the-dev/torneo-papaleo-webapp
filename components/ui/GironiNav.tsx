@@ -11,7 +11,7 @@ export function GironiNav({ groups }: { groups: string[] }) {
           <a
             key={g}
             href={`#girone-${g}`}
-            className="flex-shrink-0 px-4 py-2 bg-[var(--card)] border border-[var(--border)] rounded-lg text-sm font-semibold text-white hover:border-[#e87425]/60 active:bg-[#e87425]/10 transition-colors"
+            className="flex-shrink-0 px-4 py-2 bg-[var(--card)] border border-[var(--border)] rounded-lg text-sm font-semibold text-[var(--foreground)] hover:border-[#e87425]/60 active:bg-[#e87425]/10 transition-colors"
           >
             Girone {g}
           </a>

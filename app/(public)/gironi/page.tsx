@@ -97,8 +97,8 @@ export default async function GironiPage() {
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                     isFinished
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-yellow-500/20 text-yellow-400'
+                      ? 'bg-green-500/20 text-[var(--status-green-text)]'
+                      : 'bg-yellow-500/20 text-[var(--status-yellow-text)]'
                   }`}
                 >
                   {isFinished ? 'Girone concluso' : 'Girone in corso'}

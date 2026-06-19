@@ -274,7 +274,7 @@ export default async function TabellonePage({
       <h1 className="text-2xl font-bold text-[var(--foreground)] mb-4">Tabellone</h1>
 
       {!groupDone && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-yellow-400">
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-[var(--status-yellow-text)]">
           ⏳ La fase a gironi è ancora in corso. Gli accoppiamenti (~) sono
           provvisori e si aggiornano in tempo reale.
         </div>

@@ -8,7 +8,7 @@ const labels: Record<MatchStatus, string> = {
 
 const styles: Record<MatchStatus, string> = {
   scheduled: 'bg-[var(--border)] text-[var(--muted)]',
-  live: 'bg-green-500/20 text-green-400 animate-pulse',
+  live: 'bg-green-500/20 text-[var(--status-green-text)] animate-pulse',
   finished: 'bg-[var(--border)] text-[var(--muted)]',
 };
 
