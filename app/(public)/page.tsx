@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getLiveMatches, getNextScheduledMatch, getMatchesToday } from '@/db/queries/matches';
+import { getLiveMatches, getNextScheduledMatch, getMatchesToday, getLiveMatchGoals, type LiveGoal } from '@/db/queries/matches';
 import { getPodiumData, type PodiumData } from '@/db/queries/podium';
 import { getTournamentState } from '@/lib/tournament';
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
@@ -17,7 +17,10 @@ const roundLabels: Record<string, string> = {
   final: 'Finale',
 };
 
-function LiveMatchCard({ match }: { match: MatchWithTeams }) {
+function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoal[] }) {
+  const homeGoals = goals.filter((g) => g.team_id === match.team_home_id);
+  const awayGoals = goals.filter((g) => g.team_id === match.team_away_id);
+
   return (
     <Link href={`/gironi/${match.id}`} className="block">
       <div className="bg-[var(--card)] border border-[#e87425]/50 rounded-xl p-6 hover:border-[#e87425] transition-colors cursor-pointer">
@@ -52,6 +55,39 @@ function LiveMatchCard({ match }: { match: MatchWithTeams }) {
             <p className="font-bold text-white text-base leading-tight">{match.team_away.name}</p>
           </div>
         </div>
+
+        {(homeGoals.length > 0 || awayGoals.length > 0) && (
+          <div className="mt-4 flex gap-4">
+            <div className="flex-1 space-y-1">
+              {homeGoals.map((g, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: match.team_home.color_primary }}
+                  />
+                  <span className="text-[11px] text-white/80 leading-tight truncate">
+                    {g.player_name ?? '—'}{' '}
+                    <span className="text-white/40">({g.team_short_name})</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex-1 space-y-1">
+              {awayGoals.map((g, i) => (
+                <div key={i} className="flex items-center justify-end gap-1.5">
+                  <span className="text-[11px] text-white/80 leading-tight truncate text-right">
+                    {g.player_name ?? '—'}{' '}
+                    <span className="text-white/40">({g.team_short_name})</span>
+                  </span>
+                  <span
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: match.team_away.color_primary }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Link>
   );
@@ -207,6 +243,7 @@ export default async function HomePage() {
 
   let podiumData: PodiumData | null = null;
   let liveMatches: MatchWithTeams[] = [];
+  let liveMatchGoals: LiveGoal[][] = [];
   let todayMatches: MatchWithTeams[] = [];
   let nextMatch: MatchWithTeams | null = null;
 
@@ -217,6 +254,7 @@ export default async function HomePage() {
       getLiveMatches(),
       getMatchesToday(),
     ]);
+    liveMatchGoals = await Promise.all(liveMatches.map((m) => getLiveMatchGoals(m.id)));
     if (liveMatches.length === 0) {
       nextMatch = await getNextScheduledMatch();
     }
@@ -287,8 +325,8 @@ export default async function HomePage() {
           <div className="max-w-lg mx-auto mb-8">
             {liveMatches.length > 0 ? (
               <div className="flex flex-col gap-4">
-                {liveMatches.map((m) => (
-                  <LiveMatchCard key={m.id} match={m} />
+                {liveMatches.map((m, i) => (
+                  <LiveMatchCard key={m.id} match={m} goals={liveMatchGoals[i] ?? []} />
                 ))}
               </div>
             ) : nextMatch ? (

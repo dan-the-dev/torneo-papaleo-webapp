@@ -329,6 +329,27 @@ export async function finishMatchInDb(id: number, slotMinutes: number): Promise<
   }
 }
 
+export interface LiveGoal {
+  player_name: string | null;
+  team_id: number;
+  team_short_name: string;
+  team_color_primary: string;
+}
+
+export async function getLiveMatchGoals(matchId: number): Promise<LiveGoal[]> {
+  const { rows } = await pool.query<LiveGoal>(
+    `SELECT p.name AS player_name, me.team_id,
+            t.short_name AS team_short_name, t.color_primary AS team_color_primary
+     FROM match_events me
+     LEFT JOIN players p ON p.id = me.player_id
+     JOIN teams t ON t.id = me.team_id
+     WHERE me.match_id = $1 AND me.type = 'goal'
+     ORDER BY me.id`,
+    [matchId],
+  );
+  return rows;
+}
+
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export async function getDashboardStats(): Promise<{

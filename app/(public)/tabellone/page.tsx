@@ -1,8 +1,8 @@
 import { getKnockoutSlots, isGroupStageDone } from '@/db/queries/knockout';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
 import Link from 'next/link';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
-const ROUND_ORDER: Round[] = ['r16', 'qf', 'sf', 'final'];
 const ROUND_LABELS: Record<Round, string> = {
   r16: 'Ottavi',
   qf: 'Quarti',
@@ -12,88 +12,266 @@ const ROUND_LABELS: Record<Round, string> = {
   group: 'Girone',
 };
 
-function SlotCard({ slot }: { slot: KnockoutSlotWithDetails }) {
-  const content = slot.team ? (
-    <div
-      className="flex items-center gap-2"
-      title={slot.provisional ? 'Accoppiamento provvisorio' : undefined}
-    >
-      <div
-        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: slot.team.color_primary }}
-      />
-      {slot.provisional ? (
-        <span className="text-xs italic text-[var(--muted)] truncate">
-          ~{slot.team.name}
+// Slot number → seeding label for R16 (mirrors R16_SEEDING in lib/bracket.ts)
+const R16_SLOT_LABELS: Record<number, string> = {
+  1: 'Girone A — 1°',  2: 'Girone C — 4°',
+  3: 'Girone C — 1°',  4: 'Girone A — 4°',
+  5: 'Girone A — 2°',  6: 'Girone C — 3°',
+  7: 'Girone C — 2°',  8: 'Girone A — 3°',
+  9: 'Girone B — 1°',  10: 'Girone D — 4°',
+  11: 'Girone D — 1°', 12: 'Girone B — 4°',
+  13: 'Girone B — 2°', 14: 'Girone D — 3°',
+  15: 'Girone D — 2°', 16: 'Girone B — 3°',
+};
+
+const DESKTOP_ROUNDS: Round[] = ['r16', 'qf', 'sf', 'final'];
+const MOBILE_ROUNDS: Round[] = ['r16', 'qf', 'sf', '3rd', 'final'];
+const DESKTOP_PAIR_COUNTS: Partial<Record<Round, number>> = { qf: 4, sf: 2, final: 1 };
+
+function formatTime(date: Date): string {
+  return new Date(date).toLocaleTimeString('it-IT', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Rome',
+  });
+}
+
+// ─── Desktop match node ───────────────────────────────────────────────────────
+
+function DesktopMatchNode({
+  home, away, homeLabel, awayLabel,
+}: {
+  home: KnockoutSlotWithDetails | null;
+  away: KnockoutSlotWithDetails | null;
+  homeLabel?: string | undefined;
+  awayLabel?: string | undefined;
+}) {
+  const match = home?.match ?? away?.match ?? null;
+  const isPlayed = match?.status === 'finished' || match?.status === 'live';
+  const isLive = match?.status === 'live';
+  const sh = match?.score_home ?? null;
+  const sa = match?.score_away ?? null;
+  const homeWon = isPlayed && sh !== null && sa !== null && sh > sa;
+  const awayWon = isPlayed && sh !== null && sa !== null && sa > sh;
+
+  const node = (
+    <div className={`w-full rounded-xl overflow-hidden border transition-colors bg-[var(--card)] ${
+      isLive ? 'border-[#e87425]/60' : 'border-[var(--border)]'
+    } ${match ? 'group-hover:border-[#e87425]/60' : ''}`}>
+      {/* Home row */}
+      <div className={`flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] ${homeWon ? 'bg-white/[0.03]' : ''}`}>
+        <div className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: home?.team?.color_primary ?? '#555' }} />
+        <span className={`text-xs flex-1 truncate ${
+          home?.team
+            ? home.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
+            : 'italic text-[var(--muted)]'
+        }`}>
+          {home?.team
+            ? (home.provisional ? `~${home.team.name}` : home.team.name)
+            : (homeLabel ?? 'Da definire')}
         </span>
-      ) : (
-        <span className="text-xs font-medium text-white truncate">{slot.team.name}</span>
+        {isPlayed && (
+          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${homeWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+            {sh ?? 0}
+          </span>
+        )}
+      </div>
+      {/* Away row */}
+      <div className={`flex items-center gap-2 px-3 py-2 ${awayWon ? 'bg-white/[0.03]' : ''}`}>
+        <div className="w-2 h-2 rounded-full flex-shrink-0"
+          style={{ backgroundColor: away?.team?.color_primary ?? '#555' }} />
+        <span className={`text-xs flex-1 truncate ${
+          away?.team
+            ? away.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
+            : 'italic text-[var(--muted)]'
+        }`}>
+          {away?.team
+            ? (away.provisional ? `~${away.team.name}` : away.team.name)
+            : (awayLabel ?? 'Da definire')}
+        </span>
+        {isPlayed && (
+          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${awayWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+            {sa ?? 0}
+          </span>
+        )}
+      </div>
+      {/* Status strip — only for live/scheduled */}
+      {match && match.status !== 'finished' && (
+        <div className="border-t border-[var(--border)] px-3 py-1 flex justify-center">
+          <StatusBadge status={match.status} />
+        </div>
       )}
     </div>
-  ) : (
-    <span className="text-xs text-[var(--muted)]">Da definire</span>
   );
 
-  if (slot.match_id) {
+  if (match) {
     return (
-      <Link href={`/gironi/${slot.match_id}`}>
-        <div
-          className={`bg-[var(--card)] border rounded-lg px-3 py-2 hover:border-[#e87425]/50 transition-colors ${
-            slot.provisional ? 'border-[var(--border)]/50' : 'border-[var(--border)]'
-          }`}
-        >
-          {content}
-        </div>
+      <Link href={`/gironi/${match.id}`} className="block group cursor-pointer">
+        {node}
       </Link>
     );
   }
-
-  return (
-    <div
-      className={`bg-[var(--card)] border rounded-lg px-3 py-2 ${
-        slot.provisional ? 'border-[var(--border)]/50' : 'border-[var(--border)]'
-      }`}
-    >
-      {content}
-    </div>
-  );
+  return node;
 }
 
-function MatchSlotPair({
-  home,
-  away,
+// ─── Mobile match card ────────────────────────────────────────────────────────
+
+function MobileMatchCard({
+  home, away, homeLabel, awayLabel,
 }: {
-  home: KnockoutSlotWithDetails | undefined;
-  away: KnockoutSlotWithDetails | undefined;
+  home: KnockoutSlotWithDetails | null;
+  away: KnockoutSlotWithDetails | null;
+  homeLabel?: string | undefined;
+  awayLabel?: string | undefined;
 }) {
-  return (
-    <div className="flex flex-col gap-1">
-      {home ? (
-        <SlotCard slot={home} />
-      ) : (
-        <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />
-      )}
-      {away ? (
-        <SlotCard slot={away} />
-      ) : (
-        <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />
-      )}
+  const match = home?.match ?? away?.match ?? null;
+  const isPlayed = match?.status === 'finished' || match?.status === 'live';
+  const isLive = match?.status === 'live';
+  const sh = match?.score_home ?? null;
+  const sa = match?.score_away ?? null;
+  const homeWon = isPlayed && sh !== null && sa !== null && sh > sa;
+  const awayWon = isPlayed && sh !== null && sa !== null && sa > sh;
+
+  const card = (
+    <div className={`bg-[var(--card)] border rounded-xl p-4 transition-colors ${
+      isLive ? 'border-[#e87425]/50' : 'border-[var(--border)]'
+    } ${match ? 'hover:border-[#e87425]/50 hover:bg-white/[0.015]' : ''}`}>
+      <div className="flex items-center gap-3">
+        {/* Home team */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: home?.team?.color_primary ?? '#555' }} />
+            {home?.team ? (
+              <span className={`text-sm font-semibold truncate ${home.provisional ? 'italic text-[var(--muted)]' : 'text-white'}`}>
+                {home.provisional ? `~${home.team.name}` : home.team.name}
+              </span>
+            ) : (
+              <span className="text-xs italic text-[var(--muted)] truncate">{homeLabel ?? 'Da definire'}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Score / time */}
+        <div className="flex-shrink-0 text-center min-w-[64px]">
+          {isPlayed ? (
+            <div className="flex items-center justify-center gap-1.5">
+              <span className={`text-xl font-bold tabular-nums ${homeWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+                {sh ?? 0}
+              </span>
+              <span className="text-[var(--muted)] text-sm">–</span>
+              <span className={`text-xl font-bold tabular-nums ${awayWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+                {sa ?? 0}
+              </span>
+            </div>
+          ) : match ? (
+            <span className="text-sm font-medium text-[var(--muted)]">
+              {formatTime(match.scheduled_at)}
+            </span>
+          ) : (
+            <span className="text-sm text-[var(--muted)]">vs</span>
+          )}
+          {match && (
+            <div className="mt-1 flex justify-center">
+              <StatusBadge status={match.status} />
+            </div>
+          )}
+        </div>
+
+        {/* Away team */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-end gap-2">
+            {away?.team ? (
+              <span className={`text-sm font-semibold truncate ${away.provisional ? 'italic text-[var(--muted)]' : 'text-white'}`}>
+                {away.provisional ? `~${away.team.name}` : away.team.name}
+              </span>
+            ) : (
+              <span className="text-xs italic text-[var(--muted)] truncate">{awayLabel ?? 'Da definire'}</span>
+            )}
+            <div className="w-3 h-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: away?.team?.color_primary ?? '#555' }} />
+          </div>
+        </div>
+
+        {/* Chevron */}
+        {match && (
+          <span className="text-[var(--muted)] flex-shrink-0 text-base leading-none">›</span>
+        )}
+      </div>
     </div>
   );
+
+  if (match) {
+    return (
+      <Link href={`/gironi/${match.id}`} className="block cursor-pointer">
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
 
-export default async function TabellonePage() {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default async function TabellonePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
   const slots = await getKnockoutSlots();
   const groupDone = await isGroupStageDone();
 
-  const slotsByRound = new Map<Round, KnockoutSlotWithDetails[]>();
+  // Index slots by round → slot_number for O(1) lookup
+  const slotsByRound = new Map<Round, Map<number, KnockoutSlotWithDetails>>();
   for (const slot of slots) {
-    const arr = slotsByRound.get(slot.round) ?? [];
-    arr.push(slot);
-    slotsByRound.set(slot.round, arr);
+    if (!slotsByRound.has(slot.round)) slotsByRound.set(slot.round, new Map());
+    slotsByRound.get(slot.round)!.set(slot.slot_number, slot);
   }
 
-  const thirdPlace = slotsByRound.get('3rd') ?? [];
+  const r16SlotMap = slotsByRound.get('r16') ?? new Map<number, KnockoutSlotWithDetails>();
+  const thirdPlaceMap = slotsByRound.get('3rd') ?? new Map<number, KnockoutSlotWithDetails>();
+
+  // First round that has non-finished matches, defaulting to r16
+  const activeRound: Round = (['r16', 'qf', 'sf', 'final'] as Round[]).find((r) => {
+    const roundMap = slotsByRound.get(r);
+    return roundMap && [...roundMap.values()].some((s) => s.match?.status !== 'finished');
+  }) ?? 'r16';
+
+  const rawRoundParam = Array.isArray(params['round']) ? params['round'][0] : params['round'];
+  const validMobileRounds = new Set<string>(MOBILE_ROUNDS);
+  const selectedRound: Round =
+    rawRoundParam !== undefined && validMobileRounds.has(rawRoundParam)
+      ? (rawRoundParam as Round)
+      : activeRound;
+
+  function getMobilePairs(round: Round): Array<{
+    home: KnockoutSlotWithDetails | null;
+    away: KnockoutSlotWithDetails | null;
+    homeLabel?: string | undefined;
+    awayLabel?: string | undefined;
+  }> {
+    if (round === 'r16') {
+      return Array.from({ length: 8 }, (_, i) => ({
+        home: r16SlotMap.get(i * 2 + 1) ?? null,
+        away: r16SlotMap.get(i * 2 + 2) ?? null,
+        homeLabel: R16_SLOT_LABELS[i * 2 + 1],
+        awayLabel: R16_SLOT_LABELS[i * 2 + 2],
+      }));
+    }
+    if (round === '3rd') {
+      return [{ home: thirdPlaceMap.get(1) ?? null, away: thirdPlaceMap.get(2) ?? null }];
+    }
+    const count = round === 'qf' ? 4 : round === 'sf' ? 2 : 1;
+    const roundMap = slotsByRound.get(round) ?? new Map<number, KnockoutSlotWithDetails>();
+    return Array.from({ length: count }, (_, i) => ({
+      home: roundMap.get(i * 2 + 1) ?? null,
+      away: roundMap.get(i * 2 + 2) ?? null,
+    }));
+  }
+
+  const mobilePairs = getMobilePairs(selectedRound);
 
   return (
     <div>
@@ -106,68 +284,108 @@ export default async function TabellonePage() {
         </div>
       )}
 
-      {/* Main bracket */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex gap-4 min-w-max">
-          {ROUND_ORDER.map((round) => {
-            const roundSlots = (slotsByRound.get(round) ?? []).sort(
-              (a, b) => a.slot_number - b.slot_number,
-            );
-
-            const pairs: Array<
-              [KnockoutSlotWithDetails | undefined, KnockoutSlotWithDetails | undefined]
-            > = [];
-            for (let i = 0; i < roundSlots.length; i += 2) {
-              pairs.push([roundSlots[i], roundSlots[i + 1]]);
-            }
-
-            return (
-              <div key={round} className="flex flex-col">
-                <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide text-center mb-3">
-                  {ROUND_LABELS[round]}
-                </p>
-                <div
-                  className="flex flex-col gap-3"
-                  style={{
-                    marginTop:
-                      round === 'qf'
-                        ? '3rem'
-                        : round === 'sf'
-                          ? '7rem'
-                          : round === 'final'
-                            ? '11rem'
-                            : undefined,
-                  }}
-                >
-                  {pairs.length > 0 ? (
-                    pairs.map((pair, i) => (
-                      <div key={i} className="w-40">
-                        <MatchSlotPair home={pair[0]} away={pair[1]} />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="w-40">
-                      <MatchSlotPair home={undefined} away={undefined} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      {/* ─── Mobile: round chips + match cards (hidden on lg+) ─────────── */}
+      <div className="lg:hidden">
+        <div className="-mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
+            {MOBILE_ROUNDS.map((r) => (
+              <Link
+                key={r}
+                href={`?round=${r}`}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedRound === r
+                    ? 'bg-[#e87425] text-white'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-white'
+                }`}
+              >
+                {ROUND_LABELS[r]}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          {mobilePairs.map((pair, i) => (
+            <MobileMatchCard
+              key={i}
+              home={pair.home}
+              away={pair.away}
+              homeLabel={pair.homeLabel}
+              awayLabel={pair.awayLabel}
+            />
+          ))}
         </div>
       </div>
 
-      {/* 3rd place */}
-      {(thirdPlace.length > 0 || groupDone) && (
+      {/* ─── Desktop: horizontal bracket (shown on lg+) ─────────────────── */}
+      <div className="hidden lg:block">
+        <div className="overflow-x-auto pb-4">
+          <div className="flex gap-4 min-w-max">
+            {DESKTOP_ROUNDS.map((round) => {
+              const marginTop =
+                round === 'qf' ? '3rem'
+                : round === 'sf' ? '7rem'
+                : round === 'final' ? '11rem'
+                : undefined;
+
+              if (round === 'r16') {
+                return (
+                  <div key={round} className="flex flex-col">
+                    <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide text-center mb-3">
+                      {ROUND_LABELS[round]}
+                    </p>
+                    <div className="flex flex-col gap-3">
+                      {Array.from({ length: 8 }, (_, i) => (
+                        <div key={i} className="w-44">
+                          <DesktopMatchNode
+                            home={r16SlotMap.get(i * 2 + 1) ?? null}
+                            away={r16SlotMap.get(i * 2 + 2) ?? null}
+                            homeLabel={R16_SLOT_LABELS[i * 2 + 1]}
+                            awayLabel={R16_SLOT_LABELS[i * 2 + 2]}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+
+              const pairCount = DESKTOP_PAIR_COUNTS[round] ?? 1;
+              const roundSlotMap = slotsByRound.get(round) ?? new Map<number, KnockoutSlotWithDetails>();
+
+              return (
+                <div key={round} className="flex flex-col">
+                  <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide text-center mb-3">
+                    {ROUND_LABELS[round]}
+                  </p>
+                  <div className="flex flex-col gap-3" style={{ marginTop }}>
+                    {Array.from({ length: pairCount }, (_, i) => (
+                      <div key={i} className="w-44">
+                        <DesktopMatchNode
+                          home={roundSlotMap.get(i * 2 + 1) ?? null}
+                          away={roundSlotMap.get(i * 2 + 2) ?? null}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3rd place */}
         <div className="mt-8 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
           <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-3">
             Finale 3°/4° posto
           </p>
-          <div className="w-40">
-            <MatchSlotPair home={thirdPlace[0]} away={thirdPlace[1]} />
+          <div className="w-44">
+            <DesktopMatchNode
+              home={thirdPlaceMap.get(1) ?? null}
+              away={thirdPlaceMap.get(2) ?? null}
+            />
           </div>
         </div>
-      )}
+      </div>
 
       {!groupDone && (
         <p className="mt-4 text-xs text-[var(--muted)]">

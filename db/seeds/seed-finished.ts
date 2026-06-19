@@ -51,30 +51,30 @@ const GROUP_SCORES: Record<number, [number, number]> = {
 };
 
 // ─── Knockout results ─────────────────────────────────────────────────────────
-// matchNumber → [scoreHome, scoreAway, homeSide wins? (true=home)]
+// "round:match_number" → scores
 interface KOResult { home: number; away: number }
-const KO_SCORES: Record<number, KOResult> = {
+const KO_SCORES: Record<string, KOResult> = {
   // R16 – Jul 11
-  25: { home: 3, away: 1 }, // FAL beat ORS
-  26: { home: 2, away: 1 }, // TOR beat GAB
-  27: { home: 2, away: 0 }, // LEO beat LUP
-  28: { home: 1, away: 2 }, // DRA lost to SQU (upset)
-  29: { home: 3, away: 2 }, // TIG beat DEL
-  30: { home: 4, away: 0 }, // SER beat VOL
-  31: { home: 2, away: 0 }, // PAN beat AQU
-  32: { home: 1, away: 0 }, // GAB beat COR
+  'r16:1': { home: 3, away: 1 }, // FAL beat ORS
+  'r16:2': { home: 2, away: 1 }, // TOR beat GAB
+  'r16:3': { home: 2, away: 0 }, // LEO beat LUP
+  'r16:4': { home: 1, away: 2 }, // DRA lost to SQU (upset)
+  'r16:5': { home: 3, away: 2 }, // TIG beat DEL
+  'r16:6': { home: 4, away: 0 }, // SER beat VOL
+  'r16:7': { home: 2, away: 0 }, // PAN beat AQU
+  'r16:8': { home: 1, away: 0 }, // GAB beat COR
   // QF – Jul 12
-  33: { home: 2, away: 0 }, // FAL beat TOR
-  34: { home: 3, away: 1 }, // LEO beat SQU
-  35: { home: 1, away: 0 }, // TIG beat SER
-  36: { home: 2, away: 1 }, // PAN beat GAB
+  'qf:1': { home: 2, away: 0 }, // FAL beat TOR
+  'qf:2': { home: 3, away: 1 }, // LEO beat SQU
+  'qf:3': { home: 1, away: 0 }, // TIG beat SER
+  'qf:4': { home: 2, away: 1 }, // PAN beat GAB
   // SF – Jul 18
-  37: { home: 2, away: 1 }, // FAL beat LEO
-  38: { home: 1, away: 0 }, // TIG beat PAN
+  'sf:1': { home: 2, away: 1 }, // FAL beat LEO
+  'sf:2': { home: 1, away: 0 }, // TIG beat PAN
   // 3rd place – Jul 19
-  39: { home: 3, away: 2 }, // LEO beat PAN → LEO bronze
+  '3rd:1': { home: 3, away: 2 }, // LEO beat PAN → LEO bronze
   // Final – Jul 19
-  40: { home: 2, away: 0 }, // FAL beat TIG → FALCHI ROSSI CHAMPIONS 🏆
+  'final:1': { home: 2, away: 0 }, // FAL beat TIG → FALCHI ROSSI CHAMPIONS 🏆
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -291,6 +291,7 @@ async function generateR16Slots(
 
 interface MatchRow {
   id: number;
+  round: string;
   match_number: number;
   team_home_id: number | null;
   team_away_id: number | null;
@@ -298,7 +299,7 @@ interface MatchRow {
 
 async function getKOMatches(c: PoolClient): Promise<MatchRow[]> {
   const { rows } = await c.query<MatchRow>(
-    "SELECT id, match_number, team_home_id, team_away_id FROM matches WHERE round!='group' ORDER BY match_number"
+    "SELECT id, round, match_number, team_home_id, team_away_id FROM matches WHERE round!='group' ORDER BY round, match_number"
   );
   return rows;
 }
@@ -359,24 +360,24 @@ async function seed() {
     // r16Slots: slot_number → team_id (slots 1-16)
 
     const koMatches = await getKOMatches(client);
-    const matchByNum = new Map(koMatches.map((m) => [m.match_number, m]));
+    const matchByKey = new Map(koMatches.map((m) => [`${m.round}:${m.match_number}`, m]));
 
-    // ── R16 (matches 25-32) ──
-    // Each pair of consecutive slots forms one match: (1,2)→25, (3,4)→26, ...
+    // ── R16 ──
+    // Each pair of consecutive slots forms one match: (1,2)→r16:1, (3,4)→r16:2, ...
     console.log('R16...');
     const qfSlots: Record<number, number> = {}; // qf slot → winner team_id
     let qfSlotCounter = 1;
 
     for (let i = 0; i < 8; i++) {
-      const matchNum = 25 + i;
+      const key = `r16:${i + 1}`;
       const homeSlot = i * 2 + 1;
       const awaySlot = i * 2 + 2;
       const homeTeam = r16Slots[homeSlot];
       const awayTeam = r16Slots[awaySlot];
-      const match = matchByNum.get(matchNum);
-      const score = KO_SCORES[matchNum];
+      const match = matchByKey.get(key);
+      const score = KO_SCORES[key];
       if (!match || !homeTeam || !awayTeam || !score) {
-        console.warn(`R16 match ${matchNum} data missing`); continue;
+        console.warn(`R16 match ${key} data missing`); continue;
       }
 
       const { winnerId } = await applyKOMatch(
@@ -385,21 +386,21 @@ async function seed() {
       qfSlots[qfSlotCounter++] = winnerId;
     }
 
-    // ── QF (matches 33-36) ──
+    // ── QF ──
     console.log('QF...');
     const sfSlots: Record<number, number> = {};
     let sfSlotCounter = 1;
 
     for (let i = 0; i < 4; i++) {
-      const matchNum = 33 + i;
+      const key = `qf:${i + 1}`;
       const homeSlot = i * 2 + 1;
       const awaySlot = i * 2 + 2;
       const homeTeam = qfSlots[homeSlot];
       const awayTeam = qfSlots[awaySlot];
-      const match = matchByNum.get(matchNum);
-      const score = KO_SCORES[matchNum];
+      const match = matchByKey.get(key);
+      const score = KO_SCORES[key];
       if (!match || !homeTeam || !awayTeam || !score) {
-        console.warn(`QF match ${matchNum} data missing`); continue;
+        console.warn(`QF match ${key} data missing`); continue;
       }
 
       await upsertSlot(client, 'qf', homeSlot, homeTeam);
@@ -411,21 +412,21 @@ async function seed() {
       sfSlots[sfSlotCounter++] = winnerId;
     }
 
-    // ── SF (matches 37-38) ──
+    // ── SF ──
     console.log('SF...');
     const finalSlots: Record<number, number> = {};
     const thirdSlots: Record<number, number> = {};
 
     for (let i = 0; i < 2; i++) {
-      const matchNum = 37 + i;
+      const key = `sf:${i + 1}`;
       const homeSlot = i * 2 + 1;
       const awaySlot = i * 2 + 2;
       const homeTeam = sfSlots[homeSlot];
       const awayTeam = sfSlots[awaySlot];
-      const match = matchByNum.get(matchNum);
-      const score = KO_SCORES[matchNum];
+      const match = matchByKey.get(key);
+      const score = KO_SCORES[key];
       if (!match || !homeTeam || !awayTeam || !score) {
-        console.warn(`SF match ${matchNum} data missing`); continue;
+        console.warn(`SF match ${key} data missing`); continue;
       }
 
       await upsertSlot(client, 'sf', homeSlot, homeTeam);
@@ -438,13 +439,13 @@ async function seed() {
       thirdSlots[i + 1] = loserId;
     }
 
-    // ── 3rd place (match 39) ──
+    // ── 3rd place ──
     console.log('3rd place...');
     {
       const homeTeam = thirdSlots[1];
       const awayTeam = thirdSlots[2];
-      const match = matchByNum.get(39);
-      const score = KO_SCORES[39];
+      const match = matchByKey.get('3rd:1');
+      const score = KO_SCORES['3rd:1'];
       if (match && homeTeam && awayTeam && score) {
         await upsertSlot(client, '3rd', 1, homeTeam);
         await upsertSlot(client, '3rd', 2, awayTeam);
@@ -452,13 +453,13 @@ async function seed() {
       }
     }
 
-    // ── Final (match 40) ──
+    // ── Final ──
     console.log('Final...');
     {
       const homeTeam = finalSlots[1];
       const awayTeam = finalSlots[2];
-      const match = matchByNum.get(40);
-      const score = KO_SCORES[40];
+      const match = matchByKey.get('final:1');
+      const score = KO_SCORES['final:1'];
       if (match && homeTeam && awayTeam && score) {
         await upsertSlot(client, 'final', 1, homeTeam);
         await upsertSlot(client, 'final', 2, awayTeam);

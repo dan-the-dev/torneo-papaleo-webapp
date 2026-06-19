@@ -344,25 +344,24 @@ export function buildKnockoutMatches(): Array<{
     scheduledAt: string;
   }> = [];
 
-  let mn = 25;
-  // R16: July 11 — 8 matches
+  // R16: July 11 — 8 matches (match_number 1-8 within the round)
   for (let i = 0; i < 8; i++) {
     const hour = 9 + i;
-    matches.push({ round: 'r16', matchNumber: mn++, scheduledAt: `2026-07-11T${String(hour).padStart(2, '0')}:00:00+02:00` });
+    matches.push({ round: 'r16', matchNumber: i + 1, scheduledAt: `2026-07-11T${String(hour).padStart(2, '0')}:00:00+02:00` });
   }
-  // QF: July 12 — 4 matches
+  // QF: July 12 — 4 matches (match_number 1-4 within the round)
   for (let i = 0; i < 4; i++) {
     const hour = 9 + i * 2;
-    matches.push({ round: 'qf', matchNumber: mn++, scheduledAt: `2026-07-12T${String(hour).padStart(2, '0')}:00:00+02:00` });
+    matches.push({ round: 'qf', matchNumber: i + 1, scheduledAt: `2026-07-12T${String(hour).padStart(2, '0')}:00:00+02:00` });
   }
-  // SF: July 18 — 2 matches
+  // SF: July 18 — 2 matches (match_number 1-2 within the round)
   for (let i = 0; i < 2; i++) {
     const hour = 10 + i * 3;
-    matches.push({ round: 'sf', matchNumber: mn++, scheduledAt: `2026-07-18T${String(hour).padStart(2, '0')}:00:00+02:00` });
+    matches.push({ round: 'sf', matchNumber: i + 1, scheduledAt: `2026-07-18T${String(hour).padStart(2, '0')}:00:00+02:00` });
   }
   // 3rd place + Final: July 19
-  matches.push({ round: '3rd', matchNumber: mn++, scheduledAt: '2026-07-19T15:00:00+02:00' });
-  matches.push({ round: 'final', matchNumber: mn++, scheduledAt: '2026-07-19T17:00:00+02:00' });
+  matches.push({ round: '3rd', matchNumber: 1, scheduledAt: '2026-07-19T15:00:00+02:00' });
+  matches.push({ round: 'final', matchNumber: 1, scheduledAt: '2026-07-19T17:00:00+02:00' });
 
   return matches;
 }
