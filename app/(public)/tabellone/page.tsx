@@ -14,12 +14,21 @@ const ROUND_LABELS: Record<Round, string> = {
 
 function SlotCard({ slot }: { slot: KnockoutSlotWithDetails }) {
   const content = slot.team ? (
-    <div className="flex items-center gap-2">
+    <div
+      className="flex items-center gap-2"
+      title={slot.provisional ? 'Accoppiamento provvisorio' : undefined}
+    >
       <div
         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: slot.team.color_primary }}
       />
-      <span className="text-xs font-medium text-white truncate">{slot.team.name}</span>
+      {slot.provisional ? (
+        <span className="text-xs italic text-[var(--muted)] truncate">
+          ~{slot.team.name}
+        </span>
+      ) : (
+        <span className="text-xs font-medium text-white truncate">{slot.team.name}</span>
+      )}
     </div>
   ) : (
     <span className="text-xs text-[var(--muted)]">Da definire</span>
@@ -28,7 +37,11 @@ function SlotCard({ slot }: { slot: KnockoutSlotWithDetails }) {
   if (slot.match_id) {
     return (
       <Link href={`/gironi/${slot.match_id}`}>
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 py-2 hover:border-[#e87425]/50 transition-colors">
+        <div
+          className={`bg-[var(--card)] border rounded-lg px-3 py-2 hover:border-[#e87425]/50 transition-colors ${
+            slot.provisional ? 'border-[var(--border)]/50' : 'border-[var(--border)]'
+          }`}
+        >
           {content}
         </div>
       </Link>
@@ -36,7 +49,11 @@ function SlotCard({ slot }: { slot: KnockoutSlotWithDetails }) {
   }
 
   return (
-    <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-3 py-2">
+    <div
+      className={`bg-[var(--card)] border rounded-lg px-3 py-2 ${
+        slot.provisional ? 'border-[var(--border)]/50' : 'border-[var(--border)]'
+      }`}
+    >
       {content}
     </div>
   );
@@ -51,8 +68,16 @@ function MatchSlotPair({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      {home ? <SlotCard slot={home} /> : <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />}
-      {away ? <SlotCard slot={away} /> : <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />}
+      {home ? (
+        <SlotCard slot={home} />
+      ) : (
+        <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />
+      )}
+      {away ? (
+        <SlotCard slot={away} />
+      ) : (
+        <div className="h-9 bg-[var(--card)] border border-[var(--border)] rounded-lg" />
+      )}
     </div>
   );
 }
@@ -76,7 +101,8 @@ export default async function TabellonePage() {
 
       {!groupDone && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-yellow-400">
-          ⏳ Il tabellone si aggiornerà al termine della fase a gironi.
+          ⏳ La fase a gironi è ancora in corso. Gli accoppiamenti (~) sono
+          provvisori e si aggiornano in tempo reale.
         </div>
       )}
 
@@ -85,10 +111,12 @@ export default async function TabellonePage() {
         <div className="flex gap-4 min-w-max">
           {ROUND_ORDER.map((round) => {
             const roundSlots = (slotsByRound.get(round) ?? []).sort(
-              (a, b) => a.slot_number - b.slot_number
+              (a, b) => a.slot_number - b.slot_number,
             );
 
-            const pairs: Array<[KnockoutSlotWithDetails | undefined, KnockoutSlotWithDetails | undefined]> = [];
+            const pairs: Array<
+              [KnockoutSlotWithDetails | undefined, KnockoutSlotWithDetails | undefined]
+            > = [];
             for (let i = 0; i < roundSlots.length; i += 2) {
               pairs.push([roundSlots[i], roundSlots[i + 1]]);
             }
@@ -101,9 +129,14 @@ export default async function TabellonePage() {
                 <div
                   className="flex flex-col gap-3"
                   style={{
-                    justifyContent: round === 'final' ? 'center' : undefined,
-                    flex: round === 'final' ? '1' : undefined,
-                    marginTop: round === 'qf' ? '3rem' : round === 'sf' ? '7rem' : round === 'final' ? '11rem' : undefined,
+                    marginTop:
+                      round === 'qf'
+                        ? '3rem'
+                        : round === 'sf'
+                          ? '7rem'
+                          : round === 'final'
+                            ? '11rem'
+                            : undefined,
                   }}
                 >
                   {pairs.length > 0 ? (
@@ -134,6 +167,12 @@ export default async function TabellonePage() {
             <MatchSlotPair home={thirdPlace[0]} away={thirdPlace[1]} />
           </div>
         </div>
+      )}
+
+      {!groupDone && (
+        <p className="mt-4 text-xs text-[var(--muted)]">
+          ~ Accoppiamento provvisorio — può cambiare al termine della fase a gironi.
+        </p>
       )}
     </div>
   );

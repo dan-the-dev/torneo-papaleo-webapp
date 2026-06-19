@@ -55,6 +55,7 @@ export interface KnockoutSlot {
   slot_number: number;
   team_id: number | null;
   match_id: number | null;
+  provisional: boolean;
 }
 
 export interface GroupStanding {

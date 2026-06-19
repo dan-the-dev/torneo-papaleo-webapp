@@ -83,7 +83,7 @@ export default async function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { href: '/admin/partite', label: 'Gestisci partite', icon: '⚽', desc: 'Inserisci risultati e marcatori' },
-          { href: '/admin/tabellone', label: 'Tabellone', icon: '🏆', desc: 'Gestisci la fase a eliminazione' },
+          { href: '/tabellone', label: 'Tabellone', icon: '🏆', desc: 'Visualizza il tabellone (aggiornamento automatico)' },
           { href: '/', label: 'Visualizza sito', icon: '👁️', desc: 'Area pubblica del torneo' },
         ].map((card) => (
           <Link key={card.href} href={card.href} className="block">

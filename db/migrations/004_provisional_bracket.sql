@@ -1,0 +1,2 @@
+ALTER TABLE knockout_slots
+  ADD COLUMN IF NOT EXISTS provisional BOOLEAN NOT NULL DEFAULT false;

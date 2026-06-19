@@ -3,6 +3,7 @@
 import { requireAdmin } from '@/lib/auth';
 import { startMatchInDb, finishMatchInDb } from '@/db/queries/matches';
 import { MATCH_SLOT_MINUTES } from '@/lib/schedule';
+import { syncBracket } from '@/lib/bracket';
 import { revalidatePath } from 'next/cache';
 import pool from '@/db/client';
 
@@ -53,12 +54,15 @@ export async function addEventAction(
       [scoreHome, scoreAway, matchId],
     );
 
+    await syncBracket(client);
+
     await client.query('COMMIT');
 
     revalidatePath('/');
     revalidatePath('/gironi');
     revalidatePath(`/gironi/${matchId}`);
     revalidatePath('/marcatori');
+    revalidatePath('/tabellone');
     revalidatePath(`/admin/partite/${matchId}`);
 
     return { kind: 'ok', scoreHome, scoreAway, eventId };
@@ -111,11 +115,14 @@ export async function removeEventAction(
       [scoreHome, scoreAway, matchId],
     );
 
+    await syncBracket(client);
+
     await client.query('COMMIT');
 
     revalidatePath('/');
     revalidatePath('/gironi');
     revalidatePath('/marcatori');
+    revalidatePath('/tabellone');
     revalidatePath(`/admin/partite/${matchId}`);
 
     return { kind: 'ok', scoreHome, scoreAway };

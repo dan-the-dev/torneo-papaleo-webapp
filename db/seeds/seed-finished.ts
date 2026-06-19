@@ -20,7 +20,19 @@ config({ path: '.env.local' });
 
 import { Pool, type PoolClient } from 'pg';
 import { TEAMS, buildGroupMatches, buildKnockoutMatches } from './data';
-import { R16_SEEDING } from '../queries/knockout';
+
+// Local copy of the old seeding (kept here for seed accuracy — separate from
+// the live automatic seeding in lib/bracket.ts)
+const R16_SEEDING: Array<{ slot: number; group: string; position: number }[]> = [
+  [{ slot: 1, group: 'A', position: 1 }, { slot: 2, group: 'B', position: 2 }],
+  [{ slot: 3, group: 'C', position: 1 }, { slot: 4, group: 'D', position: 2 }],
+  [{ slot: 5, group: 'B', position: 1 }, { slot: 6, group: 'A', position: 2 }],
+  [{ slot: 7, group: 'D', position: 1 }, { slot: 8, group: 'C', position: 2 }],
+  [{ slot: 9, group: 'A', position: 3 }, { slot: 10, group: 'B', position: 4 }],
+  [{ slot: 11, group: 'C', position: 3 }, { slot: 12, group: 'D', position: 4 }],
+  [{ slot: 13, group: 'B', position: 3 }, { slot: 14, group: 'A', position: 4 }],
+  [{ slot: 15, group: 'D', position: 3 }, { slot: 16, group: 'C', position: 4 }],
+];
 
 const pool = new Pool({ connectionString: process.env['DATABASE_URL'] });
 
