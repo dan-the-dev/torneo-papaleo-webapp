@@ -71,11 +71,11 @@ export default async function MatchDetailPage({
           <div className="text-center">
             {isPlayed ? (
               <div className="flex items-center justify-center gap-3">
-                <span className="text-4xl font-bold tabular-nums text-white">
+                <span className="text-4xl font-bold tabular-nums text-[var(--foreground)]">
                   {match.score_home ?? '–'}
                 </span>
                 <span className="text-2xl text-[var(--muted)]">–</span>
-                <span className="text-4xl font-bold tabular-nums text-white">
+                <span className="text-4xl font-bold tabular-nums text-[var(--foreground)]">
                   {match.score_away ?? '–'}
                 </span>
               </div>
@@ -90,7 +90,7 @@ export default async function MatchDetailPage({
           {/* Away team */}
           <div className="text-center">
             <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-[#141414] border-2 border-[#e87425]" />
-            <p className="font-bold text-white text-sm">{match.team_away.name}</p>
+            <p className="font-bold text-[var(--foreground)] text-sm">{match.team_away.name}</p>
             <p className="text-xs text-[var(--muted)] mt-0.5">{match.team_away.short_name}</p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default async function MatchDetailPage({
       {match.events.length > 0 && (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden mb-6">
           <div className="px-4 py-3 border-b border-[var(--border)]">
-            <h2 className="font-bold text-white">Cronaca</h2>
+            <h2 className="font-bold text-[var(--foreground)]">Cronaca</h2>
           </div>
           <div className="divide-y divide-[var(--border)]">
             {match.events.map((event) => {
@@ -125,7 +125,7 @@ export default async function MatchDetailPage({
                   <div className="text-lg">{eventIcons[event.type]}</div>
                   <div className={`flex items-center gap-2 ${isHome ? '' : 'flex-row-reverse'}`}>
                     <div className={isHome ? 'text-left' : 'text-right'}>
-                      <p className="text-sm font-medium text-white">
+                      <p className="text-sm font-medium text-[var(--foreground)]">
                         {event.player?.name ?? 'N/D'}
                       </p>
                       <p className="text-xs text-[var(--muted)]">{eventLabels[event.type]}</p>
@@ -148,7 +148,7 @@ export default async function MatchDetailPage({
             <div key={team.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className={`w-3 h-3 rounded-full border-2 ${team.id === match.team_home_id ? 'bg-[#e87425] border-[#141414]' : 'bg-[#141414] border-[#e87425]'}`} />
-                <p className="text-sm font-bold text-white">{team.short_name}</p>
+                <p className="text-sm font-bold text-[var(--foreground)]">{team.short_name}</p>
               </div>
               {tevs.length === 0 ? (
                 <p className="text-xs text-[var(--muted)]">–</p>
@@ -157,7 +157,7 @@ export default async function MatchDetailPage({
                   {tevs.map((ev) => (
                     <div key={ev.id} className="flex items-center gap-1.5 text-xs">
                       <span>{eventIcons[ev.type]}</span>
-                      <span className="text-white truncate">{ev.player?.name ?? 'N/D'}</span>
+                      <span className="text-[var(--foreground)] truncate">{ev.player?.name ?? 'N/D'}</span>
                       {ev.minute != null && (
                         <span className="text-[var(--muted)] ml-auto flex-shrink-0">{ev.minute}&apos;</span>
                       )}

@@ -11,8 +11,8 @@ function ScorerRow({ scorer, rank, isLive }: { scorer: TopScorer; rank: number; 
         isFirst
           ? 'bg-[#e87425]'
           : rank % 2 === 0
-          ? 'bg-[#1a1a1a]'
-          : 'bg-[#141414]'
+          ? 'bg-[var(--card)]'
+          : 'bg-[var(--background)]'
       }`}
     >
       <div className="w-6 text-center flex-shrink-0">
@@ -22,7 +22,7 @@ function ScorerRow({ scorer, rank, isLive }: { scorer: TopScorer; rank: number; 
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className={`font-semibold text-sm truncate ${isFirst ? 'text-[#141414]' : 'text-white'}`}>
+          <p className={`font-semibold text-sm truncate ${isFirst ? 'text-[#141414]' : 'text-[var(--foreground)]'}`}>
             {scorer.player.name}
           </p>
           {isLive && (
@@ -41,7 +41,7 @@ function ScorerRow({ scorer, rank, isLive }: { scorer: TopScorer; rank: number; 
         </p>
       </div>
       <div className="flex-shrink-0 text-right">
-        <span className={`text-2xl font-bold tabular-nums ${isFirst ? 'text-[#141414]' : 'text-white'}`}>
+        <span className={`text-2xl font-bold tabular-nums ${isFirst ? 'text-[#141414]' : 'text-[var(--foreground)]'}`}>
           {scorer.goals}
         </span>
         <p className={`text-xs mt-0.5 ${isFirst ? 'text-[#141414]/75' : 'text-[var(--muted)]'}`}>gol</p>
@@ -60,18 +60,18 @@ export default async function MarcatoriPage() {
   return (
     <div>
       <BackToTop />
-      <h1 className="text-2xl font-bold text-white mb-6">Marcatori</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Marcatori</h1>
 
       {scorers.length === 0 ? (
         <div className="text-center py-16 text-[var(--muted)]">
           <div className="text-5xl mb-4">⚽</div>
-          <p className="text-lg font-medium text-white mb-1">Nessun dato disponibile</p>
+          <p className="text-lg font-medium text-[var(--foreground)] mb-1">Nessun dato disponibile</p>
           <p className="text-sm">Le statistiche appariranno dopo le prime partite.</p>
         </div>
       ) : (
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-[var(--border)]">
-            <h2 className="font-bold text-white">⚽ Classifica marcatori</h2>
+            <h2 className="font-bold text-[var(--foreground)]">⚽ Classifica marcatori</h2>
           </div>
           <div>
             {scorers.map((s, i) => (

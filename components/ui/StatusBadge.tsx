@@ -7,9 +7,9 @@ const labels: Record<MatchStatus, string> = {
 };
 
 const styles: Record<MatchStatus, string> = {
-  scheduled: 'bg-zinc-800 text-zinc-300',
+  scheduled: 'bg-[var(--border)] text-[var(--muted)]',
   live: 'bg-green-500/20 text-green-400 animate-pulse',
-  finished: 'bg-zinc-700 text-zinc-400',
+  finished: 'bg-[var(--border)] text-[var(--muted)]',
 };
 
 export function StatusBadge({ status }: { status: MatchStatus }) {

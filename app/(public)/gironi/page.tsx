@@ -25,7 +25,7 @@ function StandingsTable({
               <th className="text-center py-2 px-1 font-medium">GF</th>
               <th className="text-center py-2 px-1 font-medium">GS</th>
               <th className="text-center py-2 px-1 font-medium">DR</th>
-              <th className="text-center py-2 px-1 font-medium font-bold text-white">Pt</th>
+              <th className="text-center py-2 px-1 font-medium font-bold text-[var(--foreground)]">Pt</th>
             </tr>
           </thead>
           <tbody>
@@ -44,7 +44,7 @@ function StandingsTable({
                       {isLive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#e87425] animate-pulse flex-shrink-0" />
                       )}
-                      <span className={`font-medium truncate max-w-[120px] ${isLive ? 'text-white' : ''}`}>
+                      <span className={`font-medium truncate max-w-[120px] ${isLive ? 'text-[var(--foreground)]' : ''}`}>
                         {s.team.name}
                       </span>
                     </div>
@@ -58,7 +58,7 @@ function StandingsTable({
                   <td className="py-2.5 px-1 text-center text-[var(--muted)]">
                     {s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}
                   </td>
-                  <td className="py-2.5 px-1 text-center font-bold text-white">{s.points}</td>
+                  <td className="py-2.5 px-1 text-center font-bold text-[var(--foreground)]">{s.points}</td>
                 </tr>
               );
             })}
@@ -80,7 +80,7 @@ export default async function GironiPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Fase a gironi</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Fase a gironi</h1>
       <GironiNav groups={groupData.map(({ group }) => group.name)} />
       <div className="flex flex-col gap-8">
         {groupData.map(({ group, standings, matches, isFinished }) => {
@@ -92,7 +92,7 @@ export default async function GironiPage() {
           return (
           <div key={group.id} id={`girone-${group.name}`} className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-              <h2 className="font-bold text-lg text-white">Girone {group.name}</h2>
+              <h2 className="font-bold text-lg text-[var(--foreground)]">Girone {group.name}</h2>
               {matches.length > 0 && (
                 <span
                   className={`text-xs font-medium px-2.5 py-1 rounded-full ${

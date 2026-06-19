@@ -59,11 +59,11 @@ function DesktopMatchNode({
       isLive ? 'border-[#e87425]/60' : 'border-[var(--border)]'
     } ${match ? 'group-hover:border-[#e87425]/60' : ''}`}>
       {/* Home row */}
-      <div className={`flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] ${homeWon ? 'bg-white/[0.03]' : ''}`}>
+      <div className={`flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] ${homeWon ? 'bg-[var(--surface-hover)]' : ''}`}>
         <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#e87425] border border-[#141414]" />
         <span className={`text-xs flex-1 truncate ${
           home?.team
-            ? home.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
+            ? home.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)] font-medium'
             : 'italic text-[var(--muted)]'
         }`}>
           {home?.team
@@ -71,17 +71,17 @@ function DesktopMatchNode({
             : (homeLabel ?? 'Da definire')}
         </span>
         {isPlayed && (
-          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${homeWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${homeWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
             {sh ?? 0}
           </span>
         )}
       </div>
       {/* Away row */}
-      <div className={`flex items-center gap-2 px-3 py-2 ${awayWon ? 'bg-white/[0.03]' : ''}`}>
+      <div className={`flex items-center gap-2 px-3 py-2 ${awayWon ? 'bg-[var(--surface-hover)]' : ''}`}>
         <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#141414] border border-[#e87425]" />
         <span className={`text-xs flex-1 truncate ${
           away?.team
-            ? away.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
+            ? away.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)] font-medium'
             : 'italic text-[var(--muted)]'
         }`}>
           {away?.team
@@ -89,7 +89,7 @@ function DesktopMatchNode({
             : (awayLabel ?? 'Da definire')}
         </span>
         {isPlayed && (
-          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${awayWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+          <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${awayWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
             {sa ?? 0}
           </span>
         )}
@@ -134,14 +134,14 @@ function MobileMatchCard({
   const card = (
     <div className={`bg-[var(--card)] border rounded-xl p-4 transition-colors ${
       isLive ? 'border-[#e87425]/50' : 'border-[var(--border)]'
-    } ${match ? 'hover:border-[#e87425]/50 hover:bg-white/[0.015]' : ''}`}>
+    } ${match ? 'hover:border-[#e87425]/50 hover:bg-[var(--surface-hover)]' : ''}`}>
       <div className="flex items-center gap-3">
         {/* Home team */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#e87425] border-2 border-[#141414]" />
             {home?.team ? (
-              <span className={`text-sm font-semibold truncate ${home.provisional ? 'italic text-[var(--muted)]' : 'text-white'}`}>
+              <span className={`text-sm font-semibold truncate ${home.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)]'}`}>
                 {home.provisional ? `~${home.team.name}` : home.team.name}
               </span>
             ) : (
@@ -154,11 +154,11 @@ function MobileMatchCard({
         <div className="flex-shrink-0 text-center min-w-[64px]">
           {isPlayed ? (
             <div className="flex items-center justify-center gap-1.5">
-              <span className={`text-xl font-bold tabular-nums ${homeWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+              <span className={`text-xl font-bold tabular-nums ${homeWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
                 {sh ?? 0}
               </span>
               <span className="text-[var(--muted)] text-sm">–</span>
-              <span className={`text-xl font-bold tabular-nums ${awayWon ? 'text-white' : 'text-[var(--muted)]'}`}>
+              <span className={`text-xl font-bold tabular-nums ${awayWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
                 {sa ?? 0}
               </span>
             </div>
@@ -180,7 +180,7 @@ function MobileMatchCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-end gap-2">
             {away?.team ? (
-              <span className={`text-sm font-semibold truncate ${away.provisional ? 'italic text-[var(--muted)]' : 'text-white'}`}>
+              <span className={`text-sm font-semibold truncate ${away.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)]'}`}>
                 {away.provisional ? `~${away.team.name}` : away.team.name}
               </span>
             ) : (
@@ -271,7 +271,7 @@ export default async function TabellonePage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-4">Tabellone</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-4">Tabellone</h1>
 
       {!groupDone && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-yellow-400">
@@ -291,7 +291,7 @@ export default async function TabellonePage({
                 className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedRound === r
                     ? 'bg-[#e87425] text-white'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-white'
+                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]'
                 }`}
               >
                 {ROUND_LABELS[r]}

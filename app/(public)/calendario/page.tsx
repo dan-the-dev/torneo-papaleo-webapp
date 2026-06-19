@@ -29,11 +29,11 @@ export default async function CalendarioPage() {
   return (
     <div>
       <BackToTop />
-      <h1 className="text-2xl font-bold text-white mb-6">Calendario</h1>
+      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Calendario</h1>
 
       {days.length === 0 ? (
         <div className="text-center py-16 text-[var(--muted)]">
-          <p className="text-lg font-medium text-white mb-1">Nessuna partita in programma</p>
+          <p className="text-lg font-medium text-[var(--foreground)] mb-1">Nessuna partita in programma</p>
         </div>
       ) : (
         <div className="flex flex-col gap-8">

@@ -117,7 +117,7 @@ export function Sidebar() {
               <button
                 onClick={close}
                 aria-label="Chiudi menu"
-                className="p-1 text-[var(--muted)] hover:text-white transition-colors"
+                className="p-1 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
               >
                 <svg
                   width="18"

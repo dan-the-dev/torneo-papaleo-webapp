@@ -31,7 +31,7 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
 
   return (
     <Link href={`/gironi/${match.id}`} className="block group cursor-pointer">
-      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 group-hover:border-[#e87425]/70 group-hover:bg-white/[0.015] transition-all">
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 group-hover:border-[#e87425]/70 group-hover:bg-[var(--surface-hover)] transition-all">
         {showGroup && (
           <div className="text-xs text-[var(--muted)] mb-2 font-medium uppercase tracking-wide">
             {match.round === 'group' ? `Girone` : roundLabels[match.round] ?? match.round}
@@ -50,11 +50,11 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
           <div className="flex-shrink-0 text-center min-w-[72px]">
             {isPlayed ? (
               <div className="flex items-center justify-center gap-2">
-                <span className={`text-xl font-bold tabular-nums ${sh !== null && sa !== null && sh > sa ? 'text-white' : 'text-[var(--muted)]'}`}>
+                <span className={`text-xl font-bold tabular-nums ${sh !== null && sa !== null && sh > sa ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
                   {sh ?? '-'}
                 </span>
                 <span className="text-[var(--muted)]">–</span>
-                <span className={`text-xl font-bold tabular-nums ${sh !== null && sa !== null && sa > sh ? 'text-white' : 'text-[var(--muted)]'}`}>
+                <span className={`text-xl font-bold tabular-nums ${sh !== null && sa !== null && sa > sh ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
                   {sa ?? '-'}
                 </span>
               </div>
