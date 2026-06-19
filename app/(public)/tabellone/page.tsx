@@ -60,7 +60,7 @@ function DesktopMatchNode({
     } ${match ? 'group-hover:border-[#e87425]/60' : ''}`}>
       {/* Home row */}
       <div className={`flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] ${homeWon ? 'bg-white/[0.03]' : ''}`}>
-        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#e87425]" />
+        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#e87425] border border-[#141414]" />
         <span className={`text-xs flex-1 truncate ${
           home?.team
             ? home.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
@@ -78,7 +78,7 @@ function DesktopMatchNode({
       </div>
       {/* Away row */}
       <div className={`flex items-center gap-2 px-3 py-2 ${awayWon ? 'bg-white/[0.03]' : ''}`}>
-        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-white/60" />
+        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#141414] border border-[#e87425]" />
         <span className={`text-xs flex-1 truncate ${
           away?.team
             ? away.provisional ? 'italic text-[var(--muted)]' : 'text-white font-medium'
@@ -139,7 +139,7 @@ function MobileMatchCard({
         {/* Home team */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#e87425]" />
+            <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#e87425] border-2 border-[#141414]" />
             {home?.team ? (
               <span className={`text-sm font-semibold truncate ${home.provisional ? 'italic text-[var(--muted)]' : 'text-white'}`}>
                 {home.provisional ? `~${home.team.name}` : home.team.name}
@@ -186,7 +186,7 @@ function MobileMatchCard({
             ) : (
               <span className="text-xs italic text-[var(--muted)] truncate">{awayLabel ?? 'Da definire'}</span>
             )}
-            <div className="w-3 h-3 rounded-full flex-shrink-0 bg-white/60" />
+            <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#141414] border-2 border-[#e87425]" />
           </div>
         </div>
 

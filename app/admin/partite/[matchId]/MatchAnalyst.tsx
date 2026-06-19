@@ -216,7 +216,7 @@ export function MatchAnalyst({
       {/* ─── Left column: home team (mobile: 2nd) ────────────────── */}
       <div className="flex flex-col min-h-0 order-2 lg:order-1 border-b border-[var(--border)] lg:border-b-0 lg:border-r">
         <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-[#e87425] bg-[#e87425]/10">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#e87425]" />
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#e87425] border-2 border-[#141414]" />
           <h2 className="font-bold text-white text-sm truncate">
             {match.team_home.name}
           </h2>
@@ -428,7 +428,7 @@ export function MatchAnalyst({
       {/* ─── Right column: away team (mobile: 3rd) ───────────────── */}
       <div className="flex flex-col min-h-0 order-3">
         <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-white/30 bg-[#141414]">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-white/60" />
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#141414] border-2 border-[#e87425]" />
           <h2 className="font-bold text-white text-sm truncate">
             {match.team_away.name}
           </h2>

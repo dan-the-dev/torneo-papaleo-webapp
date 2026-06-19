@@ -42,7 +42,6 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
           {/* Home team */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#e87425]" />
               <span className="font-semibold text-sm truncate">{match.team_home.name}</span>
             </div>
           </div>
@@ -73,7 +72,6 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
           <div className="flex-1 min-w-0 text-right">
             <div className="flex items-center justify-end gap-2">
               <span className="font-semibold text-sm truncate">{match.team_away.name}</span>
-              <div className="w-3 h-3 rounded-full flex-shrink-0 bg-white/60" />
             </div>
           </div>
 

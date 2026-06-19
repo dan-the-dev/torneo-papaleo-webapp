@@ -35,7 +35,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
 
         <div className="flex items-center gap-4">
           <div className="flex-1 text-center min-w-0">
-            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425] border-2 border-[#141414]" />
             <p className="font-bold text-[#e87425] text-base leading-tight">{match.team_home.name}</p>
           </div>
           <div className="flex-shrink-0 text-center">
@@ -44,7 +44,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
             </p>
           </div>
           <div className="flex-1 text-center min-w-0">
-            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-white/60" />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#141414] border-2 border-[#e87425]" />
             <p className="font-bold text-white text-base leading-tight">{match.team_away.name}</p>
           </div>
         </div>
@@ -54,7 +54,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
             <div className="flex-1 space-y-1">
               {homeGoals.map((g, i) => (
                 <div key={i} className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#e87425]" />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#e87425] border border-[#141414]" />
                   <span className="text-[11px] text-white/80 leading-tight truncate">
                     {g.player_name ?? '—'}{' '}
                     <span className="text-white/40">({g.team_short_name})</span>
@@ -69,7 +69,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
                     {g.player_name ?? '—'}{' '}
                     <span className="text-white/40">({g.team_short_name})</span>
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-white/60" />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-[#141414] border border-[#e87425]" />
                 </div>
               ))}
             </div>
@@ -102,14 +102,14 @@ function NextMatchCard({ match }: { match: MatchWithTeams }) {
         </p>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1 text-center min-w-0">
-            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#e87425] border-2 border-[#141414]" />
             <p className="font-bold text-[#e87425]">{match.team_home.name}</p>
           </div>
           <div className="flex-shrink-0 text-center">
             <p className="text-xl font-bold text-[var(--muted)]">vs</p>
           </div>
           <div className="flex-1 text-center min-w-0">
-            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-white/60" />
+            <div className="w-5 h-5 rounded-full mx-auto mb-2 bg-[#141414] border-2 border-[#e87425]" />
             <p className="font-bold text-white">{match.team_away.name}</p>
           </div>
         </div>

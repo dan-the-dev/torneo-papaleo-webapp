@@ -62,7 +62,7 @@ export default async function MatchDetailPage({
         <div className="grid grid-cols-3 items-center gap-4">
           {/* Home team */}
           <div className="text-center">
-            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-[#e87425]" />
+            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-[#e87425] border-2 border-[#141414]" />
             <p className="font-bold text-[#e87425] text-sm">{match.team_home.name}</p>
             <p className="text-xs text-[var(--muted)] mt-0.5">{match.team_home.short_name}</p>
           </div>
@@ -89,7 +89,7 @@ export default async function MatchDetailPage({
 
           {/* Away team */}
           <div className="text-center">
-            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-white/20 border border-white/20" />
+            <div className="w-10 h-10 rounded-full mx-auto mb-2 bg-[#141414] border-2 border-[#e87425]" />
             <p className="font-bold text-white text-sm">{match.team_away.name}</p>
             <p className="text-xs text-[var(--muted)] mt-0.5">{match.team_away.short_name}</p>
           </div>
@@ -147,7 +147,7 @@ export default async function MatchDetailPage({
           ].map(({ team, events: tevs }) => (
             <div key={team.id} className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-3 h-3 rounded-full ${team.id === match.team_home_id ? 'bg-[#e87425]' : 'bg-white/60'}`} />
+                <div className={`w-3 h-3 rounded-full border-2 ${team.id === match.team_home_id ? 'bg-[#e87425] border-[#141414]' : 'bg-[#141414] border-[#e87425]'}`} />
                 <p className="text-sm font-bold text-white">{team.short_name}</p>
               </div>
               {tevs.length === 0 ? (

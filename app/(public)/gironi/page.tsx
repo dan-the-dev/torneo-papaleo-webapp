@@ -44,7 +44,6 @@ function StandingsTable({
                       {isLive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#e87425] animate-pulse flex-shrink-0" />
                       )}
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-[#e87425]" />
                       <span className={`font-medium truncate max-w-[120px] ${isLive ? 'text-white' : ''}`}>
                         {s.team.name}
                       </span>
