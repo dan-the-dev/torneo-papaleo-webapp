@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "npx tsx db/migrate.ts",
-    "db:fresh": "npx tsx --env-file .env.local db/seeds/seed-reset.ts && npx tsx --env-file .env.local db/seeds/seed-base.ts",
+    "db:fresh": "npx tsx --env-file .env.local db/migrate.ts && npx tsx --env-file .env.local db/seeds/seed-reset.ts && npx tsx --env-file .env.local db/seeds/seed-base.ts",
     "db:seed:base": "npx tsx db/seeds/seed-base.ts",
     "db:seed:groups-done": "npx tsx --env-file .env.local db/seeds/seed-groups-done.ts",
     "db:seed:finished": "npx tsx --env-file .env.local db/seeds/seed-finished.ts"
