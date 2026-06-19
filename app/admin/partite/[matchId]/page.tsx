@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { getMatchById } from '@/db/queries/matches';
-import { getAllPlayers } from '@/db/queries/players';
-import { MatchForm } from './MatchForm';
-import { MatchStatusControls } from '@/components/ui/MatchStatusControls';
-import Link from 'next/link';
+import { getPlayersByTeam } from '@/db/queries/players';
+import { MatchAnalyst } from './MatchAnalyst';
 
 const roundLabels: Record<string, string> = {
   group: 'Girone',
@@ -25,43 +24,46 @@ export default async function AdminMatchPage({
   const id = parseInt(matchId, 10);
   if (isNaN(id)) notFound();
 
-  const [match, players] = await Promise.all([getMatchById(id), getAllPlayers()]);
+  const match = await getMatchById(id);
   if (!match) notFound();
 
+  const [homePlayers, awayPlayers] = await Promise.all([
+    getPlayersByTeam(match.team_home_id),
+    getPlayersByTeam(match.team_away_id),
+  ]);
+
+  const dateStr = new Date(match.scheduled_at).toLocaleString('it-IT', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Rome',
+  });
+
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-6">
+    <>
+      <div className="flex items-center gap-2 py-3 text-sm flex-wrap">
         <Link
           href="/admin/partite"
-          className="text-[var(--muted)] hover:text-white text-sm transition-colors"
+          className="text-[var(--muted)] hover:text-white transition-colors"
         >
           ← Partite
         </Link>
-        <span className="text-[var(--muted)]">/</span>
-        <span className="text-sm text-white">
+        <span className="text-[var(--border)]">/</span>
+        <span className="text-white font-medium">
           {match.team_home.name} vs {match.team_away.name}
+        </span>
+        <span className="text-[var(--border)]">·</span>
+        <span className="text-[var(--muted)]">
+          {roundLabels[match.round] ?? match.round} · {dateStr}
         </span>
       </div>
 
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-white">
-          {match.team_home.name} – {match.team_away.name}
-        </h1>
-        <p className="text-sm text-[var(--muted)] mt-0.5">
-          {roundLabels[match.round] ?? match.round} ·{' '}
-          {new Date(match.scheduled_at).toLocaleString('it-IT', {
-            day: 'numeric',
-            month: 'long',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Rome',
-          })}
-        </p>
-      </div>
-
-      <MatchStatusControls matchId={match.id} status={match.status} />
-
-      <MatchForm match={match} players={players} />
-    </div>
+      <MatchAnalyst
+        match={match}
+        homePlayers={homePlayers}
+        awayPlayers={awayPlayers}
+      />
+    </>
   );
 }

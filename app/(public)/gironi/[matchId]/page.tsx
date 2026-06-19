@@ -22,7 +22,7 @@ const eventIcons: Record<EventType, string> = {
 };
 
 const eventLabels: Record<EventType, string> = {
-  goal: 'Gol',
+  goal: 'Goal',
   assist: 'Assist',
   red_card: 'Espulsione',
 };
