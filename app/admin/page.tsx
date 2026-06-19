@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/auth';
 import { getDashboardStats } from '@/db/queries/matches';
 import Link from 'next/link';
+import type { MatchWithTeams } from '@/types/tournament';
 
 function formatDateTime(date: Date): string {
   return new Date(date).toLocaleString('it-IT', {
@@ -11,6 +12,51 @@ function formatDateTime(date: Date): string {
     minute: '2-digit',
     timeZone: 'Europe/Rome',
   });
+}
+
+function MatchWidget({ label, match, live = false }: {
+  label: string;
+  match: MatchWithTeams;
+  live?: boolean;
+}) {
+  return (
+    <div className={`bg-[var(--card)] border rounded-xl p-4 ${live ? 'border-[#e87425]/50' : 'border-[var(--border)]'}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-xs text-[var(--muted)] uppercase tracking-wide font-medium">{label}</p>
+        {live && (
+          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#e87425]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#e87425] animate-pulse" />
+            LIVE
+          </span>
+        )}
+      </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="font-semibold text-white">
+            {match.team_home.name} vs {match.team_away.name}
+          </p>
+          {live ? (
+            <p className="text-sm font-bold text-[#e87425] mt-0.5">
+              {match.score_home ?? 0} — {match.score_away ?? 0}
+              {match.current_minute !== null && (
+                <span className="text-[var(--muted)] font-normal ml-2">{match.current_minute}&apos;</span>
+              )}
+            </p>
+          ) : (
+            <p className="text-sm text-[var(--muted)] mt-0.5 capitalize">
+              {formatDateTime(match.scheduled_at)}
+            </p>
+          )}
+        </div>
+        <Link
+          href={`/admin/partite/${match.id}`}
+          className="bg-[#e87425] hover:bg-[#c55f0a] text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
+        >
+          {live ? 'Gestisci' : 'Inserisci'}
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 export default async function AdminDashboard() {
@@ -58,25 +104,14 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {stats.nextMatch && (
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 mb-6">
-          <p className="text-xs text-[var(--muted)] uppercase tracking-wide font-medium mb-2">Prossima partita</p>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-white">
-                {stats.nextMatch.team_home.name} vs {stats.nextMatch.team_away.name}
-              </p>
-              <p className="text-sm text-[var(--muted)] mt-0.5 capitalize">
-                {formatDateTime(stats.nextMatch.scheduled_at)}
-              </p>
-            </div>
-            <Link
-              href={`/admin/partite/${stats.nextMatch.id}`}
-              className="bg-[#e87425] hover:bg-[#c55f0a] text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-            >
-              Inserisci
-            </Link>
-          </div>
+      {(stats.liveMatch || stats.nextMatch) && (
+        <div className="flex flex-col gap-3 mb-6">
+          {stats.liveMatch && (
+            <MatchWidget label="Partita in corso" match={stats.liveMatch} live />
+          )}
+          {stats.nextMatch && (
+            <MatchWidget label="Prossima partita" match={stats.nextMatch} />
+          )}
         </div>
       )}
 

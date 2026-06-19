@@ -356,6 +356,7 @@ export async function getDashboardStats(): Promise<{
   total: number;
   finished: number;
   live: number;
+  liveMatch: MatchWithTeams | null;
   nextMatch: MatchWithTeams | null;
 }> {
   const { rows: counts } = await pool.query<{
@@ -371,17 +372,26 @@ export async function getDashboardStats(): Promise<{
   );
   const c = counts[0] ?? { total: '0', finished: '0', live: '0' };
 
-  const { rows: nextRows } = await pool.query<RawMatchRow>(
-    `SELECT ${TEAMS_SELECT} FROM matches m${TEAMS_JOIN}
-     WHERE m.status = 'scheduled'
-     ORDER BY m.scheduled_at
-     LIMIT 1`
-  );
+  const [{ rows: liveRows }, { rows: nextRows }] = await Promise.all([
+    pool.query<RawMatchRow>(
+      `SELECT ${TEAMS_SELECT} FROM matches m${TEAMS_JOIN}
+       WHERE m.status = 'live'
+       ORDER BY m.scheduled_at
+       LIMIT 1`
+    ),
+    pool.query<RawMatchRow>(
+      `SELECT ${TEAMS_SELECT} FROM matches m${TEAMS_JOIN}
+       WHERE m.status = 'scheduled'
+       ORDER BY m.scheduled_at
+       LIMIT 1`
+    ),
+  ]);
 
   return {
     total: parseInt(c.total, 10),
     finished: parseInt(c.finished, 10),
     live: parseInt(c.live, 10),
+    liveMatch: liveRows[0] ? rowToMatchWithTeams(liveRows[0]) : null,
     nextMatch: nextRows[0] ? rowToMatchWithTeams(nextRows[0]) : null,
   };
 }
