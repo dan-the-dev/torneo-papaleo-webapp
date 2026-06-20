@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { MatchCard } from './MatchCard';
 import type { MatchWithTeams, Team } from '@/types/tournament';
 
@@ -39,108 +39,180 @@ function XIcon() {
 }
 
 export function CalendarioFilter({ days, teams }: { days: Day[]; teams: Team[] }) {
-  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null);
-  const [search, setSearch] = useState('');
+  const [inputValue, setInputValue]           = useState('');
+  const [selectedTeam, setSelectedTeam]       = useState<Team | null>(null);
+  const [isOpen, setIsOpen]                   = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef     = useRef<HTMLInputElement>(null);
+  const listRef      = useRef<HTMLUListElement>(null);
 
   const sortedTeams = useMemo(
     () => [...teams].sort((a, b) => a.name.localeCompare(b.name, 'it')),
     [teams],
   );
 
-  const visibleTeams = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? sortedTeams.filter((t) => t.name.toLowerCase().includes(q)) : sortedTeams;
-  }, [sortedTeams, search]);
+  // Suggestions: show all when query empty, filtered otherwise.
+  const suggestions = useMemo(() => {
+    if (selectedTeam) return [];
+    const q = inputValue.trim().toLowerCase();
+    return q
+      ? sortedTeams.filter((t) => t.name.toLowerCase().includes(q))
+      : sortedTeams;
+  }, [sortedTeams, inputValue, selectedTeam]);
 
   const filteredDays = useMemo(() => {
-    if (!selectedTeamId) return days;
+    if (!selectedTeam) return days;
     return days
       .map(({ date, matches }) => ({
         date,
         matches: matches.filter(
-          (m) => m.team_home_id === selectedTeamId || m.team_away_id === selectedTeamId,
+          (m) => m.team_home_id === selectedTeam.id || m.team_away_id === selectedTeam.id,
         ),
       }))
       .filter(({ matches }) => matches.length > 0);
-  }, [days, selectedTeamId]);
+  }, [days, selectedTeam]);
 
-  const selectedTeam = useMemo(
-    () => teams.find((t) => t.id === selectedTeamId) ?? null,
-    [teams, selectedTeamId],
-  );
+  // Close on outside click
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, []);
 
-  function toggleTeam(id: number) {
-    setSelectedTeamId((prev) => (prev === id ? null : id));
-    setSearch('');
+  // Scroll highlighted suggestion into view
+  useEffect(() => {
+    if (highlightedIndex < 0 || !listRef.current) return;
+    const item = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex]);
+
+  function selectTeam(team: Team) {
+    setSelectedTeam(team);
+    setInputValue(team.name);
+    setIsOpen(false);
+    setHighlightedIndex(-1);
   }
 
-  function reset() {
-    setSelectedTeamId(null);
-    setSearch('');
+  function clearFilter() {
+    setSelectedTeam(null);
+    setInputValue('');
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+    inputRef.current?.focus();
   }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSelectedTeam(null);
+    setInputValue(e.target.value);
+    setIsOpen(true);
+    setHighlightedIndex(-1);
+  }
+
+  function handleFocus() {
+    if (selectedTeam) {
+      // Let user type over current selection to search again
+      inputRef.current?.select();
+    } else {
+      setIsOpen(true);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+      return;
+    }
+    if (!isOpen) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setIsOpen(true); setHighlightedIndex(0); }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const team = suggestions[highlightedIndex];
+      if (team) selectTeam(team);
+    }
+  }
+
+  const showClear = selectedTeam !== null || inputValue !== '';
+  const dropdownOpen = isOpen && suggestions.length > 0;
 
   return (
     <div>
-      {/* ── Filter area ─────────────────────────────────────────── */}
-      {selectedTeam ? (
-        <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <span className="text-sm text-[var(--muted)]">Stai vedendo:</span>
-          <span className="inline-flex items-center gap-1.5 bg-[#e87425] text-white text-sm font-medium px-3 py-1.5 rounded-full">
-            {selectedTeam.name}
+      {/* ── Combobox ────────────────────────────────────────────── */}
+      <div ref={containerRef} className="relative mb-6">
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            role="combobox"
+            aria-expanded={dropdownOpen}
+            aria-autocomplete="list"
+            aria-controls="team-listbox"
+            aria-activedescendant={highlightedIndex >= 0 ? `team-opt-${highlightedIndex}` : undefined}
+            placeholder="Cerca squadra…"
+            value={inputValue}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onKeyDown={handleKeyDown}
+            autoComplete="off"
+            className={`w-full bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#e87425] transition-colors ${showClear ? 'pr-9' : ''}`}
+          />
+          {showClear && (
             <button
-              onClick={reset}
-              aria-label="Rimuovi filtro"
-              className="opacity-80 hover:opacity-100 transition-opacity"
+              onMouseDown={(e) => { e.preventDefault(); clearFilter(); }}
+              aria-label="Cancella filtro"
+              tabIndex={-1}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
             >
               <XIcon />
             </button>
-          </span>
+          )}
         </div>
-      ) : (
-        <div className="mb-6">
-          {/* Search input */}
-          <div className="relative mb-3">
-            <input
-              type="text"
-              placeholder="Cerca squadra…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[var(--card)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-9 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[#e87425] transition-colors"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                aria-label="Cancella ricerca"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                <XIcon />
-              </button>
-            )}
-          </div>
 
-          {/* Team grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {visibleTeams.map((team) => (
-              <button
-                key={team.id}
-                onClick={() => toggleTeam(team.id)}
-                className={`px-2 py-2.5 rounded-xl text-xs font-medium text-center leading-tight transition-all active:scale-95 ${
-                  selectedTeamId === team.id
-                    ? 'bg-[#e87425] text-white scale-[1.03] shadow-sm'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--foreground)] hover:border-[#e87425]/50'
-                }`}
-              >
-                {team.name}
-              </button>
-            ))}
-            {visibleTeams.length === 0 && (
-              <p className="col-span-2 sm:col-span-4 text-sm text-[var(--muted)] py-1">
-                Nessuna squadra trovata.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+        {dropdownOpen && (
+          <ul
+            ref={listRef}
+            id="team-listbox"
+            role="listbox"
+            className="absolute z-20 mt-1 w-full bg-[var(--card)] border border-[var(--border)] rounded-xl shadow-lg max-h-52 overflow-y-auto py-1"
+          >
+            {suggestions.map((team, i) => {
+              const active = i === highlightedIndex;
+              return (
+                <li
+                  key={team.id}
+                  id={`team-opt-${i}`}
+                  role="option"
+                  aria-selected={active}
+                  onMouseDown={(e) => { e.preventDefault(); selectTeam(team); }}
+                  onMouseEnter={() => setHighlightedIndex(i)}
+                  className={`px-4 py-2.5 text-sm cursor-pointer border-l-2 transition-colors ${
+                    active
+                      ? 'border-[#e87425] bg-[#e87425]/10 text-[var(--foreground)]'
+                      : 'border-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)]'
+                  }`}
+                >
+                  {team.name}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* ── Match list ──────────────────────────────────────────── */}
       {filteredDays.length === 0 ? (
