@@ -68,37 +68,13 @@ export async function getGroupStandings(groupId: number): Promise<GroupStanding[
 
   const result = Array.from(standings.values());
 
+  // Tiebreaker order per regulation: pts → gd → gf → ga (fewer is better) → sorteggio
   result.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
-
-    // Head-to-head
-    const h2hMatches = matches.filter(
-      (m) =>
-        (m.team_home_id === a.team.id && m.team_away_id === b.team.id) ||
-        (m.team_home_id === b.team.id && m.team_away_id === a.team.id)
-    );
-    let h2hPtsA = 0;
-    let h2hPtsB = 0;
-    let h2hGdA = 0;
-    for (const m of h2hMatches) {
-      if (m.score_home === null || m.score_away === null) continue;
-      if (m.team_home_id === a.team.id) {
-        if (m.score_home > m.score_away) h2hPtsA += 3;
-        else if (m.score_home === m.score_away) { h2hPtsA++; h2hPtsB++; }
-        else h2hPtsB += 3;
-        h2hGdA += m.score_home - m.score_away;
-      } else {
-        if (m.score_away > m.score_home) h2hPtsA += 3;
-        else if (m.score_home === m.score_away) { h2hPtsA++; h2hPtsB++; }
-        else h2hPtsB += 3;
-        h2hGdA += m.score_away - m.score_home;
-      }
-    }
-    if (h2hPtsB !== h2hPtsA) return h2hPtsB - h2hPtsA;
-    if (h2hGdA !== 0) return h2hGdA > 0 ? -1 : 1;
-
     if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
-    return b.goals_for - a.goals_for;
+    if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+    if (a.goals_against !== b.goals_against) return a.goals_against - b.goals_against;
+    return 0; // sorteggio — resolved manually
   });
 
   return result;

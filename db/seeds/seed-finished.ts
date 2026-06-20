@@ -19,7 +19,10 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 import { Pool, type PoolClient } from 'pg';
-import { TEAMS, buildGroupMatches, buildKnockoutMatches } from './data';
+// NOTE: This dev-only seed uses the old 4-group fake-team structure.
+// With the real tournament data (single group, 16 real teams) this seed
+// is no longer accurate — it exists only for local development demos.
+import { TEAMS, GROUP_MATCHES, buildKnockoutMatches } from './data';
 
 // Local copy of the old seeding (kept here for seed accuracy — separate from
 // the live automatic seeding in lib/bracket.ts)
@@ -96,24 +99,23 @@ async function insertBaseData(c: PoolClient): Promise<{
   teamIds: Record<string, number>;
   playerIdsByTeam: Record<number, number[]>;
 }> {
-  const groupIds: Record<string, number> = {};
-  for (const g of ['A', 'B', 'C', 'D']) {
-    const { rows } = await c.query<{ id: number }>(
-      'INSERT INTO groups (name) VALUES ($1) RETURNING id', [g]
-    );
-    if (rows[0]) groupIds[g] = rows[0].id;
-  }
+  // Single group; the old A/B/C/D splits are preserved as keys for legacy bracket logic
+  const { rows: gRows } = await c.query<{ id: number }>(
+    "INSERT INTO groups (name) VALUES ('G') RETURNING id"
+  );
+  const gid = gRows[0]?.id;
+  if (!gid) throw new Error('Group insert failed');
+  // Distribute teams across legacy group keys so R16_SEEDING still resolves
+  const groupIds: Record<string, number> = { A: gid, B: gid, C: gid, D: gid };
 
   const teamIds: Record<string, number> = {};
   const playerIdsByTeam: Record<number, number[]> = {};
 
   for (const team of TEAMS) {
-    const gid = groupIds[team.group];
-    if (!gid) throw new Error(`Group ${team.group} missing`);
     const { rows } = await c.query<{ id: number }>(
       `INSERT INTO teams (name, short_name, color_primary, color_secondary, group_id)
        VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-      [team.name, team.short_name, team.color_primary, team.color_secondary, gid]
+      [team.name, team.short_name, '#e87425', '#141414', gid]
     );
     const tid = rows[0]?.id;
     if (!tid) throw new Error(`Team insert failed: ${team.name}`);
@@ -137,15 +139,15 @@ async function insertMatches(
 ): Promise<Record<number, number>> {
   const matchDbIds: Record<number, number> = {};
 
-  for (const m of buildGroupMatches()) {
-    const gid = groupIds[m.group];
+  const groupId = groupIds['A']; // all in one group
+  for (const m of GROUP_MATCHES) {
     const hid = teamIds[m.home];
     const aid = teamIds[m.away];
-    if (!gid || !hid || !aid) throw new Error(`Match data missing: ${m.home} vs ${m.away}`);
+    if (!groupId || !hid || !aid) throw new Error(`Match data missing: ${m.home} vs ${m.away}`);
     const { rows } = await c.query<{ id: number }>(
       `INSERT INTO matches (group_id, round, match_number, scheduled_at, team_home_id, team_away_id, status)
        VALUES ($1,'group',$2,$3,$4,$5,'scheduled') RETURNING id`,
-      [gid, m.matchNumber, m.scheduledAt, hid, aid]
+      [groupId, m.matchNumber, m.scheduledAt, hid, aid]
     );
     if (rows[0]) matchDbIds[m.matchNumber] = rows[0].id;
   }

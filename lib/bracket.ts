@@ -1,32 +1,32 @@
 import type { PoolClient } from 'pg';
 import type { Round } from '@/types/tournament';
 
-// ─── R16 seeding constants ────────────────────────────────────────────────────
-// Groups pair as A-C (left half) and B-D (right half)
+// ─── Seeding constants ────────────────────────────────────────────────────────
+// Regulation: position-based seeding (1st vs 16th, 2nd vs 15th, …)
 
 const R16_SEEDING = [
-  // Left half (A-C groups)
-  { matchNum: 1, homeGroup: 'A', homePos: 1, awayGroup: 'C', awayPos: 4 },
-  { matchNum: 2, homeGroup: 'C', homePos: 1, awayGroup: 'A', awayPos: 4 },
-  { matchNum: 3, homeGroup: 'A', homePos: 2, awayGroup: 'C', awayPos: 3 },
-  { matchNum: 4, homeGroup: 'C', homePos: 2, awayGroup: 'A', awayPos: 3 },
-  // Right half (B-D groups)
-  { matchNum: 5, homeGroup: 'B', homePos: 1, awayGroup: 'D', awayPos: 4 },
-  { matchNum: 6, homeGroup: 'D', homePos: 1, awayGroup: 'B', awayPos: 4 },
-  { matchNum: 7, homeGroup: 'B', homePos: 2, awayGroup: 'D', awayPos: 3 },
-  { matchNum: 8, homeGroup: 'D', homePos: 2, awayGroup: 'B', awayPos: 3 },
+  { matchNum: 1, homePos:  1, awayPos: 16 },
+  { matchNum: 2, homePos:  2, awayPos: 15 },
+  { matchNum: 3, homePos:  3, awayPos: 14 },
+  { matchNum: 4, homePos:  4, awayPos: 13 },
+  { matchNum: 5, homePos:  5, awayPos: 12 },
+  { matchNum: 6, homePos:  6, awayPos: 11 },
+  { matchNum: 7, homePos:  7, awayPos: 10 },
+  { matchNum: 8, homePos:  8, awayPos:  9 },
 ] as const;
 
+// QF: winner of R16-n vs winner of R16-(9-n)
 const QF_SEEDING = [
-  { matchNum: 1, homeR16: 1, awayR16: 2 },
-  { matchNum: 2, homeR16: 3, awayR16: 4 },
-  { matchNum: 3, homeR16: 5, awayR16: 6 },
-  { matchNum: 4, homeR16: 7, awayR16: 8 },
+  { matchNum: 1, homeR16: 1, awayR16: 8 },
+  { matchNum: 2, homeR16: 2, awayR16: 7 },
+  { matchNum: 3, homeR16: 3, awayR16: 6 },
+  { matchNum: 4, homeR16: 4, awayR16: 5 },
 ] as const;
 
+// SF: winner of QF-1 vs QF-4, winner of QF-2 vs QF-3
 const SF_SEEDING = [
-  { matchNum: 1, homeQF: 1, awayQF: 2 },
-  { matchNum: 2, homeQF: 3, awayQF: 4 },
+  { matchNum: 1, homeQF: 1, awayQF: 4 },
+  { matchNum: 2, homeQF: 2, awayQF: 3 },
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -124,62 +124,46 @@ async function getLoser(
   return null;
 }
 
-// Compute group rankings using the transaction client so we see the
-// current (uncommitted) match score updates.
-async function computeGroupRankings(
-  client: PoolClient,
-): Promise<Map<string, number[]>> {
-  const { rows: teams } = await client.query<{ id: number; group_name: string }>(
-    `SELECT t.id, g.name AS group_name
-     FROM teams t
-     JOIN groups g ON g.id = t.group_id`,
+// Compute single overall standings across all 16 teams.
+// Tiebreaker order (regulation): pts → gd → gf → ga (fewer is better) → sorteggio.
+async function computeOverallRankings(client: PoolClient): Promise<number[]> {
+  const { rows: teams } = await client.query<{ id: number }>(
+    'SELECT id FROM teams ORDER BY id',
   );
 
   const { rows: matches } = await client.query<{
-    group_name: string;
     team_home_id: number;
     team_away_id: number;
     score_home: number;
     score_away: number;
   }>(
-    `SELECT g.name AS group_name, m.team_home_id, m.team_away_id,
-            m.score_home, m.score_away
-     FROM matches m
-     JOIN groups g ON g.id = m.group_id
-     WHERE m.round = 'group'
-       AND m.status IN ('finished', 'live')
-       AND m.score_home IS NOT NULL
-       AND m.score_away IS NOT NULL`,
+    `SELECT team_home_id, team_away_id, score_home, score_away
+     FROM matches
+     WHERE round = 'group'
+       AND status IN ('finished', 'live')
+       AND score_home IS NOT NULL
+       AND score_away IS NOT NULL`,
   );
 
-  type Stats = { pts: number; gd: number; gf: number };
-  const groupStats = new Map<string, Map<number, Stats>>();
-  for (const { id, group_name } of teams) {
-    if (!groupStats.has(group_name)) groupStats.set(group_name, new Map());
-    groupStats.get(group_name)!.set(id, { pts: 0, gd: 0, gf: 0 });
-  }
-
-  type Mtch = (typeof matches)[number];
-  const matchesByGroup = new Map<string, Mtch[]>();
-  for (const m of matches) {
-    const arr = matchesByGroup.get(m.group_name) ?? [];
-    arr.push(m);
-    matchesByGroup.set(m.group_name, arr);
+  type Stats = { pts: number; gd: number; gf: number; ga: number };
+  const stats = new Map<number, Stats>();
+  for (const { id } of teams) {
+    stats.set(id, { pts: 0, gd: 0, gf: 0, ga: 0 });
   }
 
   for (const m of matches) {
-    const home = groupStats.get(m.group_name)?.get(m.team_home_id);
-    const away = groupStats.get(m.group_name)?.get(m.team_away_id);
+    const home = stats.get(m.team_home_id);
+    const away = stats.get(m.team_away_id);
     if (!home || !away) continue;
-    const sh = m.score_home;
-    const sa = m.score_away;
-    home.gf += sh;
-    home.gd += sh - sa;
-    away.gf += sa;
-    away.gd += sa - sh;
-    if (sh > sa) {
+    home.gf += m.score_home;
+    home.ga += m.score_away;
+    home.gd += m.score_home - m.score_away;
+    away.gf += m.score_away;
+    away.ga += m.score_home;
+    away.gd += m.score_away - m.score_home;
+    if (m.score_home > m.score_away) {
       home.pts += 3;
-    } else if (sh === sa) {
+    } else if (m.score_home === m.score_away) {
       home.pts += 1;
       away.pts += 1;
     } else {
@@ -187,66 +171,33 @@ async function computeGroupRankings(
     }
   }
 
-  const result = new Map<string, number[]>();
-  for (const [gName, stats] of groupStats) {
-    const groupMatches = matchesByGroup.get(gName) ?? [];
-    const entries = [...stats.entries()];
-    entries.sort(([aId, aS], [bId, bS]) => {
-      if (bS.pts !== aS.pts) return bS.pts - aS.pts;
+  const entries = [...stats.entries()];
+  entries.sort(([, a], [, b]) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if (b.gd !== a.gd) return b.gd - a.gd;
+    if (b.gf !== a.gf) return b.gf - a.gf;
+    if (a.ga !== b.ga) return a.ga - b.ga; // fewer goals conceded is better
+    return 0; // sorteggio — no automated resolution
+  });
 
-      // Head-to-head tiebreaker
-      const h2h = groupMatches.filter(
-        (m) =>
-          (m.team_home_id === aId && m.team_away_id === bId) ||
-          (m.team_home_id === bId && m.team_away_id === aId),
-      );
-      let ptA = 0;
-      let ptB = 0;
-      let gdA = 0;
-      for (const m of h2h) {
-        const sh = m.score_home;
-        const sa = m.score_away;
-        if (m.team_home_id === aId) {
-          if (sh > sa) ptA += 3;
-          else if (sh === sa) { ptA++; ptB++; }
-          else ptB += 3;
-          gdA += sh - sa;
-        } else {
-          if (sa > sh) ptA += 3;
-          else if (sh === sa) { ptA++; ptB++; }
-          else ptB += 3;
-          gdA += sa - sh;
-        }
-      }
-      if (ptB !== ptA) return ptB - ptA;
-      if (gdA !== 0) return gdA > 0 ? -1 : 1;
-
-      if (bS.gd !== aS.gd) return bS.gd - aS.gd;
-      return bS.gf - aS.gf;
-    });
-    result.set(gName, entries.map(([id]) => id));
-  }
-
-  return result;
+  return entries.map(([id]) => id);
 }
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
 export async function syncBracket(client: PoolClient): Promise<void> {
-  // Group stage status
   const { rows: unfinishedRows } = await client.query<{ unfinished: string }>(
     `SELECT COUNT(*)::text AS unfinished
      FROM matches WHERE round = 'group' AND status != 'finished'`,
   );
   const provisional = parseInt(unfinishedRows[0]?.unfinished ?? '0', 10) > 0;
 
-  // Group standings (uses same transaction client to see uncommitted scores)
-  const standings = await computeGroupRankings(client);
+  const rankings = await computeOverallRankings(client);
 
-  // R16 — from group standings
+  // R16 — seeded from overall standings (pos 1 vs 16, pos 2 vs 15, …)
   for (const seed of R16_SEEDING) {
-    const homeTeamId = standings.get(seed.homeGroup)?.[seed.homePos - 1] ?? null;
-    const awayTeamId = standings.get(seed.awayGroup)?.[seed.awayPos - 1] ?? null;
+    const homeTeamId = rankings[seed.homePos - 1] ?? null;
+    const awayTeamId = rankings[seed.awayPos - 1] ?? null;
     await upsertMatchSlots(client, 'r16', seed.matchNum, homeTeamId, awayTeamId, provisional);
   }
 

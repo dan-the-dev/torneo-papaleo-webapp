@@ -1,7 +1,25 @@
 import { getAllGroups, getGroupWithMatches } from '@/db/queries/groups';
 import { MatchCard } from '@/components/ui/MatchCard';
-import { GironiNav } from '@/components/ui/GironiNav';
-import type { GroupStanding } from '@/types/tournament';
+import type { GroupStanding, MatchWithTeams } from '@/types/tournament';
+
+export const dynamic = 'force-dynamic';
+
+function groupMatchesByDate(matches: MatchWithTeams[]): [string, MatchWithTeams[]][] {
+  const map = new Map<string, MatchWithTeams[]>();
+  for (const m of matches) {
+    const label = new Date(m.scheduled_at).toLocaleDateString('it-IT', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Europe/Rome',
+    });
+    const arr = map.get(label) ?? [];
+    arr.push(m);
+    map.set(label, arr);
+  }
+  return [...map.entries()];
+}
 
 function StandingsTable({
   standings,
@@ -32,7 +50,10 @@ function StandingsTable({
             {standings.map((s, i) => {
               const isLive = liveTeamIds.includes(s.team.id);
               return (
-                <tr key={s.team.id} className={`border-b border-[var(--border)]/50 ${isLive ? 'font-semibold' : ''}`}>
+                <tr
+                  key={s.team.id}
+                  className={`border-b border-[var(--border)]/50 ${isLive ? 'font-semibold' : ''}`}
+                >
                   <td
                     className={`py-2.5 pr-2 text-[var(--muted)] ${isLive ? 'pl-1' : ''}`}
                     style={isLive ? { borderLeft: '4px solid #e87425' } : undefined}
@@ -44,7 +65,7 @@ function StandingsTable({
                       {isLive && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#e87425] animate-pulse flex-shrink-0" />
                       )}
-                      <span className={`font-medium truncate max-w-[120px] ${isLive ? 'text-[var(--foreground)]' : ''}`}>
+                      <span className={`font-medium truncate max-w-[120px] sm:max-w-none ${isLive ? 'text-[var(--foreground)]' : ''}`}>
                         {s.team.name}
                       </span>
                     </div>
@@ -66,7 +87,7 @@ function StandingsTable({
         </table>
       </div>
       {liveTeamIds.length > 0 && (
-        <p className="text-xs text-[var(--muted)] mt-2">
+        <p className="text-xs text-[var(--muted)] mt-2 px-1">
           * Classifica provvisoria: partita in corso
         </p>
       )}
@@ -76,54 +97,64 @@ function StandingsTable({
 
 export default async function GironiPage() {
   const groups = await getAllGroups();
-  const groupData = await Promise.all(groups.map((g) => getGroupWithMatches(g.id)));
+  const group = groups[0];
+  if (!group) {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Classifica</h1>
+        <p className="text-[var(--muted)]">Nessun dato disponibile.</p>
+      </div>
+    );
+  }
+
+  const { standings, matches, isFinished } = await getGroupWithMatches(group.id);
+
+  const liveMatch = matches.find((m) => m.status === 'live');
+  const liveTeamIds = liveMatch ? [liveMatch.team_home_id, liveMatch.team_away_id] : [];
+  const matchesByDate = groupMatchesByDate(matches);
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Fase a gironi</h1>
-      <GironiNav groups={groupData.map(({ group }) => group.name)} />
-      <div className="flex flex-col gap-8">
-        {groupData.map(({ group, standings, matches, isFinished }) => {
-          const liveMatch = matches.find((m) => m.status === 'live');
-          const liveTeamIds = liveMatch
-            ? [liveMatch.team_home_id, liveMatch.team_away_id]
-            : [];
+      <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Classifica</h1>
 
-          return (
-          <div key={group.id} id={`girone-${group.name}`} className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-              <h2 className="font-bold text-lg text-[var(--foreground)]">Girone {group.name}</h2>
-              {matches.length > 0 && (
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                    isFinished
-                      ? 'bg-green-500/20 text-[var(--status-green-text)]'
-                      : 'bg-yellow-500/20 text-[var(--status-yellow-text)]'
-                  }`}
-                >
-                  {isFinished ? 'Girone concluso' : 'Girone in corso'}
-                </span>
-              )}
-            </div>
-
-            <div className="px-4 py-3">
-              <StandingsTable standings={standings} liveTeamIds={liveTeamIds} />
-            </div>
-
-            {matches.length > 0 && (
-              <div className="border-t border-[var(--border)] px-4 py-3">
-                <p className="text-xs text-[var(--muted)] uppercase tracking-wide font-medium mb-3">Partite</p>
-                <div className="flex flex-col gap-2">
-                  {matches.map((match) => (
-                    <MatchCard key={match.id} match={match} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          );
-        })}
+      {/* Standings */}
+      <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl overflow-hidden mb-8">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+          <h2 className="font-bold text-lg text-[var(--foreground)]">Classifica generale</h2>
+          {matches.length > 0 && (
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                isFinished
+                  ? 'bg-green-500/20 text-[var(--status-green-text)]'
+                  : 'bg-yellow-500/20 text-[var(--status-yellow-text)]'
+              }`}
+            >
+              {isFinished ? 'Girone concluso' : 'Girone in corso'}
+            </span>
+          )}
+        </div>
+        <div className="px-4 py-3">
+          <StandingsTable standings={standings} liveTeamIds={liveTeamIds} />
+        </div>
       </div>
+
+      {/* Matches grouped by date */}
+      {matchesByDate.length > 0 && (
+        <div className="flex flex-col gap-6">
+          {matchesByDate.map(([dateLabel, dayMatches]) => (
+            <div key={dateLabel}>
+              <p className="text-xs text-[var(--muted)] uppercase tracking-wide font-semibold capitalize mb-3">
+                {dateLabel}
+              </p>
+              <div className="flex flex-col gap-2">
+                {dayMatches.map((match) => (
+                  <MatchCard key={match.id} match={match} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

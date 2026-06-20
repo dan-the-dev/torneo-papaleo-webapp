@@ -13,15 +13,16 @@ const ROUND_LABELS: Record<Round, string> = {
 };
 
 // Slot number → seeding label for R16 (mirrors R16_SEEDING in lib/bracket.ts)
+// homeSlot = matchNum*2-1, awaySlot = matchNum*2
 const R16_SLOT_LABELS: Record<number, string> = {
-  1: 'Girone A — 1°',  2: 'Girone C — 4°',
-  3: 'Girone C — 1°',  4: 'Girone A — 4°',
-  5: 'Girone A — 2°',  6: 'Girone C — 3°',
-  7: 'Girone C — 2°',  8: 'Girone A — 3°',
-  9: 'Girone B — 1°',  10: 'Girone D — 4°',
-  11: 'Girone D — 1°', 12: 'Girone B — 4°',
-  13: 'Girone B — 2°', 14: 'Girone D — 3°',
-  15: 'Girone D — 2°', 16: 'Girone B — 3°',
+  1:  '1° class.',  2: '16° class.',
+  3:  '2° class.',  4: '15° class.',
+  5:  '3° class.',  6: '14° class.',
+  7:  '4° class.',  8: '13° class.',
+  9:  '5° class.', 10: '12° class.',
+  11: '6° class.', 12: '11° class.',
+  13: '7° class.', 14: '10° class.',
+  15: '8° class.', 16:  '9° class.',
 };
 
 const DESKTOP_ROUNDS: Round[] = ['r16', 'qf', 'sf', 'final'];

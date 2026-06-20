@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 config({ path: '.env.local' });
 import pool from '../client';
-import { TEAMS, buildGroupMatches, buildKnockoutMatches } from './data';
+import { TEAMS, GROUP_MATCHES, buildKnockoutMatches } from './data';
 
 async function seed() {
   const client = await pool.connect();
@@ -34,25 +34,20 @@ async function seed() {
     await client.query("SELECT setval(pg_get_serial_sequence('match_events', 'id'), 1, false)");
     await client.query("SELECT setval(pg_get_serial_sequence('knockout_slots', 'id'), 1, false)");
 
-    // Insert groups
-    const groupIds: Record<string, number> = {};
-    for (const g of ['A', 'B', 'C', 'D']) {
-      const { rows } = await client.query<{ id: number }>(
-        'INSERT INTO groups (name) VALUES ($1) RETURNING id',
-        [g]
-      );
-      if (rows[0]) groupIds[g] = rows[0].id;
-    }
+    // Insert single group (girone unico a 16 squadre)
+    const { rows: groupRows } = await client.query<{ id: number }>(
+      "INSERT INTO groups (name) VALUES ('G') RETURNING id"
+    );
+    const groupId = groupRows[0]?.id;
+    if (!groupId) throw new Error('Failed to insert group');
 
-    // Insert teams + players
+    // Insert teams + placeholder players
     const teamIds: Record<string, number> = {};
     for (const team of TEAMS) {
-      const gid = groupIds[team.group];
-      if (!gid) throw new Error(`Group ${team.group} not found`);
       const { rows } = await client.query<{ id: number }>(
         `INSERT INTO teams (name, short_name, color_primary, color_secondary, group_id)
          VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-        [team.name, team.short_name, team.color_primary, team.color_secondary, gid]
+        [team.name, team.short_name, '#e87425', '#141414', groupId]
       );
       const teamId = rows[0]?.id;
       if (!teamId) throw new Error(`Failed to insert team ${team.name}`);
@@ -66,21 +61,19 @@ async function seed() {
       }
     }
 
-    // Insert group matches
-    const groupMatches = buildGroupMatches();
-    for (const m of groupMatches) {
-      const gid = groupIds[m.group];
+    // Insert group stage matches
+    for (const m of GROUP_MATCHES) {
       const homeId = teamIds[m.home];
       const awayId = teamIds[m.away];
-      if (!gid || !homeId || !awayId) throw new Error(`Match data missing for ${m.home} vs ${m.away}`);
+      if (!homeId || !awayId) throw new Error(`Team not found for: ${m.home} vs ${m.away}`);
       await client.query(
         `INSERT INTO matches (group_id, round, match_number, scheduled_at, team_home_id, team_away_id, status)
          VALUES ($1, 'group', $2, $3, $4, $5, 'scheduled')`,
-        [gid, m.matchNumber, m.scheduledAt, homeId, awayId]
+        [groupId, m.matchNumber, m.scheduledAt, homeId, awayId]
       );
     }
 
-    // Insert knockout matches (no teams yet)
+    // Insert knockout placeholder matches (no teams assigned yet)
     const knockoutMatches = buildKnockoutMatches();
     for (const m of knockoutMatches) {
       await client.query(
@@ -90,13 +83,12 @@ async function seed() {
       );
     }
 
-    // Mark seed as applied
     await client.query("INSERT INTO seed_runs (name) VALUES ('base')");
-
     await client.query('COMMIT');
+
     console.log('Base seed complete.');
-    console.log(`Teams: ${TEAMS.length}, Groups: 4`);
-    console.log(`Group matches: ${groupMatches.length}, Knockout matches: ${knockoutMatches.length}`);
+    console.log(`Teams: ${TEAMS.length} (girone unico 'G')`);
+    console.log(`Group matches: ${GROUP_MATCHES.length}, Knockout placeholders: ${knockoutMatches.length}`);
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

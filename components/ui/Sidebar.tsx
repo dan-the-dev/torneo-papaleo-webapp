@@ -7,10 +7,11 @@ import { ThemeToggle } from './ThemeToggle';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/gironi', label: 'Gironi' },
+  { href: '/gironi', label: 'Classifica' },
   { href: '/tabellone', label: 'Tabellone' },
   { href: '/marcatori', label: 'Marcatori' },
   { href: '/calendario', label: 'Calendario' },
+  { href: '/regolamento', label: 'Regolamento' },
 ];
 
 function isActive(href: string, pathname: string): boolean {
