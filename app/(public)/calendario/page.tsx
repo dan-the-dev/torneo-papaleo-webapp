@@ -1,30 +1,24 @@
 import { getAllMatchesGroupedByDay } from '@/db/queries/matches';
-import { MatchCard } from '@/components/ui/MatchCard';
+import { CalendarioFilter } from '@/components/ui/CalendarioFilter';
 import { BackToTop } from '@/components/ui/BackToTop';
+import type { Team } from '@/types/tournament';
 
-const roundLabels: Record<string, string> = {
-  group: 'Fase a gironi',
-  r16: 'Ottavi di finale',
-  qf: 'Quarti di finale',
-  sf: 'Semifinali',
-  '3rd': 'Finale 3°/4° posto',
-  final: 'Finale',
-};
-
-function formatDayLabel(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  if (!y || !m || !d) return dateStr;
-  const date = new Date(y, m - 1, d);
-  return date.toLocaleDateString('it-IT', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+export const dynamic = 'force-dynamic';
 
 export default async function CalendarioPage() {
   const days = await getAllMatchesGroupedByDay();
+
+  // Collect unique teams from all matches (knockout placeholders may have no team yet)
+  const teamMap = new Map<number, Team>();
+  for (const { matches } of days) {
+    for (const m of matches) {
+      const home = m.team_home as Team | null;
+      const away = m.team_away as Team | null;
+      if (home) teamMap.set(home.id, home);
+      if (away) teamMap.set(away.id, away);
+    }
+  }
+  const teams = [...teamMap.values()];
 
   return (
     <div>
@@ -36,29 +30,7 @@ export default async function CalendarioPage() {
           <p className="text-lg font-medium text-[var(--foreground)] mb-1">Nessuna partita in programma</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-8">
-          {days.map(({ date, matches }) => (
-            <div key={date}>
-              <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-sm font-semibold text-[var(--muted)] uppercase tracking-wide capitalize">
-                  {formatDayLabel(date)}
-                </h2>
-                <div className="flex-1 h-px bg-[var(--border)]" />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {matches.map((match) => (
-                  <div key={match.id}>
-                    <div className="text-xs text-[#e87425] font-medium mb-1 ml-1">
-                      {roundLabels[match.round] ?? match.round}
-                    </div>
-                    <MatchCard match={match} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <CalendarioFilter days={days} teams={teams} />
       )}
     </div>
   );
