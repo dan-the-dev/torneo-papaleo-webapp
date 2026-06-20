@@ -127,8 +127,8 @@ async function getLoser(
 // Compute single overall standings across all 16 teams.
 // Tiebreaker order (regulation): pts → gd → gf → ga (fewer is better) → sorteggio.
 async function computeOverallRankings(client: PoolClient): Promise<number[]> {
-  const { rows: teams } = await client.query<{ id: number }>(
-    'SELECT id FROM teams ORDER BY id',
+  const { rows: teams } = await client.query<{ id: number; name: string }>(
+    'SELECT id, name FROM teams ORDER BY id',
   );
 
   const { rows: matches } = await client.query<{
@@ -145,10 +145,10 @@ async function computeOverallRankings(client: PoolClient): Promise<number[]> {
        AND score_away IS NOT NULL`,
   );
 
-  type Stats = { pts: number; gd: number; gf: number; ga: number };
+  type Stats = { pts: number; gd: number; gf: number; ga: number; name: string };
   const stats = new Map<number, Stats>();
-  for (const { id } of teams) {
-    stats.set(id, { pts: 0, gd: 0, gf: 0, ga: 0 });
+  for (const { id, name } of teams) {
+    stats.set(id, { pts: 0, gd: 0, gf: 0, ga: 0, name });
   }
 
   for (const m of matches) {
@@ -177,7 +177,7 @@ async function computeOverallRankings(client: PoolClient): Promise<number[]> {
     if (b.gd !== a.gd) return b.gd - a.gd;
     if (b.gf !== a.gf) return b.gf - a.gf;
     if (a.ga !== b.ga) return a.ga - b.ga; // fewer goals conceded is better
-    return 0; // sorteggio — no automated resolution
+    return a.name.localeCompare(b.name, 'it'); // stable order before sorteggio
   });
 
   return entries.map(([id]) => id);

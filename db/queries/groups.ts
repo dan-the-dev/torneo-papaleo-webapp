@@ -69,12 +69,13 @@ export async function getGroupStandings(groupId: number): Promise<GroupStanding[
   const result = Array.from(standings.values());
 
   // Tiebreaker order per regulation: pts → gd → gf → ga (fewer is better) → sorteggio
+  // Alphabetical used as stable display order before sorteggio is drawn
   result.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff;
     if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
     if (a.goals_against !== b.goals_against) return a.goals_against - b.goals_against;
-    return 0; // sorteggio — resolved manually
+    return a.team.name.localeCompare(b.team.name, 'it');
   });
 
   return result;
