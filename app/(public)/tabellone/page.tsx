@@ -1,4 +1,5 @@
 import { getKnockoutSlots, isGroupStageDone } from '@/db/queries/knockout';
+import { isBracketPublished } from '@/db/queries/config';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -216,6 +217,18 @@ export default async function TabellonePage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const published = await isBracketPublished();
+  if (!published) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-24 px-4">
+        <p className="text-4xl mb-4">🏆</p>
+        <p className="text-base text-[var(--foreground)] max-w-sm">
+          Il tabellone sarà disponibile al termine della fase a gironi.
+        </p>
+      </div>
+    );
+  }
+
   const params = await searchParams;
   const slots = await getKnockoutSlots();
   const groupDone = await isGroupStageDone();

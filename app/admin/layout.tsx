@@ -5,6 +5,7 @@ import { logoutAction } from './actions';
 const adminLinks = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/partite', label: 'Partite' },
+  { href: '/admin/tabellone', label: 'Tabellone' },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

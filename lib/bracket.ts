@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg';
-import type { Round } from '@/types/tournament';
+import type { KnockoutSlotSource, Round } from '@/types/tournament';
 
 // ─── Seeding constants ────────────────────────────────────────────────────────
 // Regulation: position-based seeding (1st vs 16th, 2nd vs 15th, …)
@@ -33,6 +33,9 @@ const SF_SEEDING = [
 
 type KnockoutRound = Exclude<Round, 'group'>;
 
+// Used exclusively by the auto-sync below. Writes are skipped for any slot
+// an admin has manually configured (source = 'manual'), so a goal during the
+// group stage never clobbers a manually-set R16 matchup.
 async function upsertMatchSlots(
   client: PoolClient,
   round: KnockoutRound,
@@ -53,26 +56,86 @@ async function upsertMatchSlots(
   const awaySlot = matchNum * 2;
 
   await client.query(
-    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional, source)
+     VALUES ($1, $2, $3, $4, $5, 'auto')
      ON CONFLICT (round, slot_number) DO UPDATE
        SET team_id = EXCLUDED.team_id,
            match_id = EXCLUDED.match_id,
-           provisional = EXCLUDED.provisional`,
+           provisional = EXCLUDED.provisional,
+           source = EXCLUDED.source
+       WHERE knockout_slots.source = 'auto'`,
     [round, homeSlot, homeTeamId, match.id, provisional],
   );
   await client.query(
-    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional, source)
+     VALUES ($1, $2, $3, $4, $5, 'auto')
      ON CONFLICT (round, slot_number) DO UPDATE
        SET team_id = EXCLUDED.team_id,
            match_id = EXCLUDED.match_id,
-           provisional = EXCLUDED.provisional`,
+           provisional = EXCLUDED.provisional,
+           source = EXCLUDED.source
+       WHERE knockout_slots.source = 'auto'`,
     [round, awaySlot, awayTeamId, match.id, provisional],
   );
+
+  // Only auto-sync the match's teams if neither slot has been manually set —
+  // otherwise an admin's manual home pick could be paired with an auto away pick.
+  const { rows: slotRows } = await client.query<{ source: KnockoutSlotSource }>(
+    `SELECT source FROM knockout_slots WHERE round = $1 AND slot_number IN ($2, $3)`,
+    [round, homeSlot, awaySlot],
+  );
+  if (slotRows.every((s) => s.source === 'auto')) {
+    await client.query(
+      `UPDATE matches SET team_home_id = $1, team_away_id = $2 WHERE id = $3`,
+      [homeTeamId, awayTeamId, match.id],
+    );
+  }
+}
+
+// Admin-driven override for a single R16 match. Always wins over whatever
+// the auto-sync had set, and marks both slots as 'manual' so future
+// syncBracket() runs leave them alone.
+export async function saveManualR16Slot(
+  client: PoolClient,
+  matchNum: number,
+  homeTeamId: number | null,
+  awayTeamId: number | null,
+  scheduledAt: Date,
+): Promise<void> {
+  const { rows } = await client.query<{ id: number; status: string }>(
+    `SELECT id, status FROM matches WHERE round = 'r16' AND match_number = $1`,
+    [matchNum],
+  );
+  const match = rows[0];
+  if (!match) throw new Error(`R16 match ${matchNum} not found`);
+  if (match.status === 'live' || match.status === 'finished') return;
+
+  const homeSlot = matchNum * 2 - 1;
+  const awaySlot = matchNum * 2;
+
   await client.query(
-    `UPDATE matches SET team_home_id = $1, team_away_id = $2 WHERE id = $3`,
-    [homeTeamId, awayTeamId, match.id],
+    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional, source)
+     VALUES ('r16', $1, $2, $3, false, 'manual')
+     ON CONFLICT (round, slot_number) DO UPDATE
+       SET team_id = EXCLUDED.team_id,
+           match_id = EXCLUDED.match_id,
+           provisional = EXCLUDED.provisional,
+           source = EXCLUDED.source`,
+    [homeSlot, homeTeamId, match.id],
+  );
+  await client.query(
+    `INSERT INTO knockout_slots (round, slot_number, team_id, match_id, provisional, source)
+     VALUES ('r16', $1, $2, $3, false, 'manual')
+     ON CONFLICT (round, slot_number) DO UPDATE
+       SET team_id = EXCLUDED.team_id,
+           match_id = EXCLUDED.match_id,
+           provisional = EXCLUDED.provisional,
+           source = EXCLUDED.source`,
+    [awaySlot, awayTeamId, match.id],
+  );
+  await client.query(
+    `UPDATE matches SET team_home_id = $1, team_away_id = $2, scheduled_at = $3 WHERE id = $4`,
+    [homeTeamId, awayTeamId, scheduledAt, match.id],
   );
 }
 

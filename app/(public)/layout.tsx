@@ -1,9 +1,12 @@
 import { Sidebar } from '@/components/ui/Sidebar';
+import { isBracketPublished } from '@/db/queries/config';
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const bracketPublished = await isBracketPublished();
+
   return (
     <div className="min-h-screen">
-      <Sidebar />
+      <Sidebar bracketPublished={bracketPublished} />
       {/* Offset: sidebar width on desktop, mobile header height on mobile */}
       <div className="md:ml-[220px] pt-14 md:pt-0 flex flex-col min-h-screen">
         <main className="flex-1 px-4 py-6">{children}</main>

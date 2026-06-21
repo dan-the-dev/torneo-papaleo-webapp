@@ -1,0 +1,2 @@
+ALTER TABLE knockout_slots
+ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'auto';

@@ -49,6 +49,8 @@ export interface MatchEvent {
   minute: number | null;
 }
 
+export type KnockoutSlotSource = 'auto' | 'manual';
+
 export interface KnockoutSlot {
   id: number;
   round: Round;
@@ -56,6 +58,7 @@ export interface KnockoutSlot {
   team_id: number | null;
   match_id: number | null;
   provisional: boolean;
+  source: KnockoutSlotSource;
 }
 
 export interface GroupStanding {

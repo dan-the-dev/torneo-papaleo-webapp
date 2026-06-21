@@ -21,14 +21,16 @@ function isActive(href: string, pathname: string): boolean {
 
 function NavLinks({
   pathname,
+  links,
   onLinkClick,
 }: {
   pathname: string;
+  links: typeof navLinks;
   onLinkClick?: () => void;
 }) {
   return (
     <nav className="flex-1 px-3 py-2">
-      {navLinks.map((l) => (
+      {links.map((l) => (
         <Link
           key={l.href}
           href={l.href}
@@ -46,9 +48,11 @@ function NavLinks({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ bracketPublished }: { bracketPublished: boolean }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  const links = bracketPublished ? navLinks : navLinks.filter((l) => l.href !== '/tabellone');
 
   function close() {
     setIsOpen(false);
@@ -65,7 +69,7 @@ export function Sidebar() {
           </Link>
           <ThemeToggle />
         </div>
-        <NavLinks pathname={pathname} />
+        <NavLinks pathname={pathname} links={links} />
         <div className="px-5 py-4 border-t border-[var(--border)]">
           <p className="text-xs text-[var(--muted)] leading-relaxed">
             Torneo Andrea Papaleo 2026
@@ -133,7 +137,7 @@ export function Sidebar() {
                 </svg>
               </button>
             </div>
-            <NavLinks pathname={pathname} onLinkClick={close} />
+            <NavLinks pathname={pathname} links={links} onLinkClick={close} />
             <div className="px-5 py-4 border-t border-[var(--border)]">
               <p className="text-xs text-[var(--muted)]">Torneo Andrea Papaleo 2026</p>
             </div>
