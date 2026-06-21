@@ -57,7 +57,7 @@ export const TEAMS: TeamSeed[] = [
   ) },
   { name: 'BLOCCO-02',                  short_name: 'BLK', players: players(
     'Luca Tregnaghi', 'Simone Gelati', 'Alessio Bastianoni', 'Luca Aurel Gorni',
-    'Mirko De Patto', 'Riccardo Brazzoli',
+    'Mirko De Patto', 'Riccardo Brazzoli', 'Christian Della Foglia', 'Valentin Triboi',
   ) },
   { name: 'GARPEZ UNITED',              short_name: 'GAR', players: players(
     'Gionatan Casati', 'Diego Marazzi', 'Matteo Baldo', 'Andrea Borroni',
