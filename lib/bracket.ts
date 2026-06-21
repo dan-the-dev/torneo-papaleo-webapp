@@ -6,7 +6,9 @@ import type { KnockoutSlotSource, Round } from '@/types/tournament';
 // draw (see saveManualR16Slot below). Only QF/SF/Final/3rd stay automatic.
 
 // QF: winner of R16-n vs winner of R16-(9-n)
-const QF_SEEDING = [
+// Exported so the UI can derive "Vinc. Ottavo X" placeholder labels from the
+// same source of truth instead of duplicating the mapping.
+export const QF_SEEDING = [
   { matchNum: 1, homeR16: 1, awayR16: 8 },
   { matchNum: 2, homeR16: 2, awayR16: 7 },
   { matchNum: 3, homeR16: 3, awayR16: 6 },
@@ -14,7 +16,7 @@ const QF_SEEDING = [
 ] as const;
 
 // SF: winner of QF-1 vs QF-4, winner of QF-2 vs QF-3
-const SF_SEEDING = [
+export const SF_SEEDING = [
   { matchNum: 1, homeQF: 1, awayQF: 4 },
   { matchNum: 2, homeQF: 2, awayQF: 3 },
 ] as const;

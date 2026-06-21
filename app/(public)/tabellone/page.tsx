@@ -1,5 +1,6 @@
 import { getKnockoutSlots } from '@/db/queries/knockout';
 import { isBracketPublished } from '@/db/queries/config';
+import { getKnockoutPlaceholderLabel } from '@/lib/bracketLabels';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -253,15 +254,24 @@ export default async function TabellonePage({
   function getMobilePairs(round: Round): Array<{
     home: KnockoutSlotWithDetails | null;
     away: KnockoutSlotWithDetails | null;
+    homeLabel?: string | undefined;
+    awayLabel?: string | undefined;
   }> {
     if (round === '3rd') {
-      return [{ home: thirdPlaceMap.get(1) ?? null, away: thirdPlaceMap.get(2) ?? null }];
+      return [{
+        home: thirdPlaceMap.get(1) ?? null,
+        away: thirdPlaceMap.get(2) ?? null,
+        homeLabel: getKnockoutPlaceholderLabel('3rd', 1) ?? undefined,
+        awayLabel: getKnockoutPlaceholderLabel('3rd', 2) ?? undefined,
+      }];
     }
     const count = round === 'r16' ? 8 : round === 'qf' ? 4 : round === 'sf' ? 2 : 1;
     const roundMap = round === 'r16' ? r16SlotMap : (slotsByRound.get(round) ?? new Map<number, KnockoutSlotWithDetails>());
     return Array.from({ length: count }, (_, i) => ({
       home: roundMap.get(i * 2 + 1) ?? null,
       away: roundMap.get(i * 2 + 2) ?? null,
+      homeLabel: getKnockoutPlaceholderLabel(round, i * 2 + 1) ?? undefined,
+      awayLabel: getKnockoutPlaceholderLabel(round, i * 2 + 2) ?? undefined,
     }));
   }
 
@@ -299,7 +309,13 @@ export default async function TabellonePage({
         <div className="flex flex-col gap-3">
           {mobilePairs.map((pair, i) => (
             published ? (
-              <MobileMatchCard key={i} home={pair.home} away={pair.away} />
+              <MobileMatchCard
+                key={i}
+                home={pair.home}
+                away={pair.away}
+                homeLabel={pair.homeLabel}
+                awayLabel={pair.awayLabel}
+              />
             ) : (
               <WaitingMobileCard key={i} />
             )
@@ -357,6 +373,8 @@ export default async function TabellonePage({
                           <DesktopMatchNode
                             home={roundSlotMap.get(i * 2 + 1) ?? null}
                             away={roundSlotMap.get(i * 2 + 2) ?? null}
+                            homeLabel={getKnockoutPlaceholderLabel(round, i * 2 + 1) ?? undefined}
+                            awayLabel={getKnockoutPlaceholderLabel(round, i * 2 + 2) ?? undefined}
                           />
                         ) : (
                           <WaitingDesktopNode />
@@ -380,6 +398,8 @@ export default async function TabellonePage({
               <DesktopMatchNode
                 home={thirdPlaceMap.get(1) ?? null}
                 away={thirdPlaceMap.get(2) ?? null}
+                homeLabel={getKnockoutPlaceholderLabel('3rd', 1) ?? undefined}
+                awayLabel={getKnockoutPlaceholderLabel('3rd', 2) ?? undefined}
               />
             ) : (
               <WaitingDesktopNode />

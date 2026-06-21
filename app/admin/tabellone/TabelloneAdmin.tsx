@@ -2,7 +2,8 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { TeamSelect } from '@/components/ui/TeamSelect';
-import type { Team, KnockoutSlotWithDetails } from '@/types/tournament';
+import { getKnockoutPlaceholderLabel } from '@/lib/bracketLabels';
+import type { Round, Team, KnockoutSlotWithDetails } from '@/types/tournament';
 import type { R16MatchSlot } from '@/db/queries/knockout';
 import {
   publishBracketAction,
@@ -92,19 +93,29 @@ function getPair(slots: KnockoutSlotWithDetails[], matchNum: number) {
 
 function ReadOnlyNode({
   label,
+  round,
+  matchNum,
   home,
   away,
 }: {
   label: string;
+  round: Round;
+  matchNum: number;
   home: KnockoutSlotWithDetails | null;
   away: KnockoutSlotWithDetails | null;
 }) {
+  const homeLabel = getKnockoutPlaceholderLabel(round, matchNum * 2 - 1) ?? 'Da definire';
+  const awayLabel = getKnockoutPlaceholderLabel(round, matchNum * 2) ?? 'Da definire';
   return (
     <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3">
       <p className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">{label}</p>
-      <p className="text-sm text-white truncate">{home?.team?.name ?? 'Da definire'}</p>
+      <p className={`text-sm truncate ${home?.team ? 'text-white' : 'italic text-[var(--muted)]'}`}>
+        {home?.team?.name ?? homeLabel}
+      </p>
       <p className="text-xs text-[var(--muted)] my-1">vs</p>
-      <p className="text-sm text-white truncate">{away?.team?.name ?? 'Da definire'}</p>
+      <p className={`text-sm truncate ${away?.team ? 'text-white' : 'italic text-[var(--muted)]'}`}>
+        {away?.team?.name ?? awayLabel}
+      </p>
     </div>
   );
 }
@@ -408,19 +419,23 @@ export function TabelloneAdmin({
           </p>
           {[1, 2, 3, 4].map((n) => {
             const { home, away } = getPair(qfSlots, n);
-            return <ReadOnlyNode key={`qf-${n}`} label={`Quarto ${n}`} home={home} away={away} />;
+            return (
+              <ReadOnlyNode key={`qf-${n}`} label={`Quarto ${n}`} round="qf" matchNum={n} home={home} away={away} />
+            );
           })}
           {[1, 2].map((n) => {
             const { home, away } = getPair(sfSlots, n);
-            return <ReadOnlyNode key={`sf-${n}`} label={`Semifinale ${n}`} home={home} away={away} />;
+            return (
+              <ReadOnlyNode key={`sf-${n}`} label={`Semifinale ${n}`} round="sf" matchNum={n} home={home} away={away} />
+            );
           })}
           {(() => {
             const { home, away } = getPair(finalSlots, 1);
-            return <ReadOnlyNode label="Finale" home={home} away={away} />;
+            return <ReadOnlyNode label="Finale" round="final" matchNum={1} home={home} away={away} />;
           })()}
           {(() => {
             const { home, away } = getPair(thirdSlots, 1);
-            return <ReadOnlyNode label="Finale 3°/4° posto" home={home} away={away} />;
+            return <ReadOnlyNode label="Finale 3°/4° posto" round="3rd" matchNum={1} home={home} away={away} />;
           })()}
         </div>
       </div>
