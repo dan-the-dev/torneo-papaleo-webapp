@@ -20,9 +20,7 @@ async function setPublished(published: boolean): Promise<SetPublishedResult> {
   }
   try {
     await setBracketPublished(published);
-    // The publish flag changes the public sidebar nav on every page, not
-    // just /tabellone, so revalidate the whole public layout tree.
-    revalidatePath('/', 'layout');
+    revalidatePath('/tabellone');
     revalidatePath('/admin/tabellone');
     return { kind: 'ok', published };
   } catch (err) {
@@ -45,7 +43,6 @@ export interface R16SlotInput {
   matchNum: number;
   homeTeamId: number | null;
   awayTeamId: number | null;
-  scheduledAt: string; // datetime-local value, e.g. "2025-07-10T17:00"
 }
 
 export type SaveR16BracketResult =
@@ -86,11 +83,7 @@ export async function saveR16BracketAction(
   try {
     await client.query('BEGIN');
     for (const slot of slots) {
-      const scheduledAt = new Date(slot.scheduledAt);
-      if (Number.isNaN(scheduledAt.getTime())) {
-        throw new Error(`Data non valida per l'ottavo ${slot.matchNum}`);
-      }
-      await saveManualR16Slot(client, slot.matchNum, slot.homeTeamId, slot.awayTeamId, scheduledAt);
+      await saveManualR16Slot(client, slot.matchNum, slot.homeTeamId, slot.awayTeamId);
     }
     await client.query('COMMIT');
 

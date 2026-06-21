@@ -1,4 +1,4 @@
-import { getKnockoutSlots, isGroupStageDone } from '@/db/queries/knockout';
+import { getKnockoutSlots } from '@/db/queries/knockout';
 import { isBracketPublished } from '@/db/queries/config';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
 import Link from 'next/link';
@@ -13,18 +13,7 @@ const ROUND_LABELS: Record<Round, string> = {
   group: 'Girone',
 };
 
-// Slot number → seeding label for R16 (mirrors R16_SEEDING in lib/bracket.ts)
-// homeSlot = matchNum*2-1, awaySlot = matchNum*2
-const R16_SLOT_LABELS: Record<number, string> = {
-  1:  '1° class.',  2: '16° class.',
-  3:  '2° class.',  4: '15° class.',
-  5:  '3° class.',  6: '14° class.',
-  7:  '4° class.',  8: '13° class.',
-  9:  '5° class.', 10: '12° class.',
-  11: '6° class.', 12: '11° class.',
-  13: '7° class.', 14: '10° class.',
-  15: '8° class.', 16:  '9° class.',
-};
+const WAITING_LABEL = '⏳ In attesa del sorteggio';
 
 const DESKTOP_ROUNDS: Round[] = ['r16', 'qf', 'sf', 'final'];
 const MOBILE_ROUNDS: Round[] = ['r16', 'qf', 'sf', '3rd', 'final'];
@@ -36,6 +25,31 @@ function formatTime(date: Date): string {
     minute: '2-digit',
     timeZone: 'Europe/Rome',
   });
+}
+
+// ─── Waiting-for-draw nodes ───────────────────────────────────────────────────
+
+function WaitingDesktopNode() {
+  return (
+    <div className="w-full rounded-xl overflow-hidden border border-dashed border-[var(--border)] bg-[var(--card)]/60">
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--border)]/50">
+        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[var(--muted)]" />
+        <span className="text-xs flex-1 truncate italic text-[var(--muted)]">{WAITING_LABEL}</span>
+      </div>
+      <div className="flex items-center gap-2 px-3 py-2.5">
+        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[var(--muted)]" />
+        <span className="text-xs flex-1 truncate italic text-[var(--muted)]">{WAITING_LABEL}</span>
+      </div>
+    </div>
+  );
+}
+
+function WaitingMobileCard() {
+  return (
+    <div className="bg-[var(--card)]/60 border border-dashed border-[var(--border)] rounded-xl p-4 text-center">
+      <span className="text-xs italic text-[var(--muted)]">{WAITING_LABEL}</span>
+    </div>
+  );
 }
 
 // ─── Desktop match node ───────────────────────────────────────────────────────
@@ -64,13 +78,9 @@ function DesktopMatchNode({
       <div className={`flex items-center gap-2 px-3 py-2 border-b border-[var(--border)] ${homeWon ? 'bg-[var(--surface-hover)]' : ''}`}>
         <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#e87425] border border-[#141414]" />
         <span className={`text-xs flex-1 truncate ${
-          home?.team
-            ? home.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)] font-medium'
-            : 'italic text-[var(--muted)]'
+          home?.team ? 'text-[var(--foreground)] font-medium' : 'italic text-[var(--muted)]'
         }`}>
-          {home?.team
-            ? (home.provisional ? `~${home.team.name}` : home.team.name)
-            : (homeLabel ?? 'Da definire')}
+          {home?.team ? home.team.name : (homeLabel ?? 'Da definire')}
         </span>
         {isPlayed && (
           <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${homeWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
@@ -82,13 +92,9 @@ function DesktopMatchNode({
       <div className={`flex items-center gap-2 px-3 py-2 ${awayWon ? 'bg-[var(--surface-hover)]' : ''}`}>
         <div className="w-2 h-2 rounded-full flex-shrink-0 bg-[#141414] border border-[#e87425]" />
         <span className={`text-xs flex-1 truncate ${
-          away?.team
-            ? away.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)] font-medium'
-            : 'italic text-[var(--muted)]'
+          away?.team ? 'text-[var(--foreground)] font-medium' : 'italic text-[var(--muted)]'
         }`}>
-          {away?.team
-            ? (away.provisional ? `~${away.team.name}` : away.team.name)
-            : (awayLabel ?? 'Da definire')}
+          {away?.team ? away.team.name : (awayLabel ?? 'Da definire')}
         </span>
         {isPlayed && (
           <span className={`text-sm font-bold tabular-nums flex-shrink-0 ml-1 ${awayWon ? 'text-[var(--foreground)]' : 'text-[var(--muted)]'}`}>
@@ -143,8 +149,8 @@ function MobileMatchCard({
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full flex-shrink-0 bg-[#e87425] border-2 border-[#141414]" />
             {home?.team ? (
-              <span className={`text-sm font-semibold truncate ${home.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)]'}`}>
-                {home.provisional ? `~${home.team.name}` : home.team.name}
+              <span className="text-sm font-semibold truncate text-[var(--foreground)]">
+                {home.team.name}
               </span>
             ) : (
               <span className="text-xs italic text-[var(--muted)] truncate">{homeLabel ?? 'Da definire'}</span>
@@ -182,8 +188,8 @@ function MobileMatchCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-end gap-2">
             {away?.team ? (
-              <span className={`text-sm font-semibold truncate ${away.provisional ? 'italic text-[var(--muted)]' : 'text-[var(--foreground)]'}`}>
-                {away.provisional ? `~${away.team.name}` : away.team.name}
+              <span className="text-sm font-semibold truncate text-[var(--foreground)]">
+                {away.team.name}
               </span>
             ) : (
               <span className="text-xs italic text-[var(--muted)] truncate">{awayLabel ?? 'Da definire'}</span>
@@ -218,20 +224,8 @@ export default async function TabellonePage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const published = await isBracketPublished();
-  if (!published) {
-    return (
-      <div className="flex flex-col items-center justify-center text-center py-24 px-4">
-        <p className="text-4xl mb-4">🏆</p>
-        <p className="text-base text-[var(--foreground)] max-w-sm">
-          Il tabellone sarà disponibile al termine della fase a gironi.
-        </p>
-      </div>
-    );
-  }
-
   const params = await searchParams;
   const slots = await getKnockoutSlots();
-  const groupDone = await isGroupStageDone();
 
   // Index slots by round → slot_number for O(1) lookup
   const slotsByRound = new Map<Round, Map<number, KnockoutSlotWithDetails>>();
@@ -259,22 +253,12 @@ export default async function TabellonePage({
   function getMobilePairs(round: Round): Array<{
     home: KnockoutSlotWithDetails | null;
     away: KnockoutSlotWithDetails | null;
-    homeLabel?: string | undefined;
-    awayLabel?: string | undefined;
   }> {
-    if (round === 'r16') {
-      return Array.from({ length: 8 }, (_, i) => ({
-        home: r16SlotMap.get(i * 2 + 1) ?? null,
-        away: r16SlotMap.get(i * 2 + 2) ?? null,
-        homeLabel: R16_SLOT_LABELS[i * 2 + 1],
-        awayLabel: R16_SLOT_LABELS[i * 2 + 2],
-      }));
-    }
     if (round === '3rd') {
       return [{ home: thirdPlaceMap.get(1) ?? null, away: thirdPlaceMap.get(2) ?? null }];
     }
-    const count = round === 'qf' ? 4 : round === 'sf' ? 2 : 1;
-    const roundMap = slotsByRound.get(round) ?? new Map<number, KnockoutSlotWithDetails>();
+    const count = round === 'r16' ? 8 : round === 'qf' ? 4 : round === 'sf' ? 2 : 1;
+    const roundMap = round === 'r16' ? r16SlotMap : (slotsByRound.get(round) ?? new Map<number, KnockoutSlotWithDetails>());
     return Array.from({ length: count }, (_, i) => ({
       home: roundMap.get(i * 2 + 1) ?? null,
       away: roundMap.get(i * 2 + 2) ?? null,
@@ -287,10 +271,9 @@ export default async function TabellonePage({
     <div>
       <h1 className="text-2xl font-bold text-[var(--foreground)] mb-4">Tabellone</h1>
 
-      {!groupDone && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-6 text-sm text-[var(--status-yellow-text)]">
-          ⏳ La fase a gironi è ancora in corso. Gli accoppiamenti (~) sono
-          provvisori e si aggiornano in tempo reale.
+      {!published && (
+        <div className="bg-[#e87425]/10 border border-[#e87425]/40 rounded-xl p-4 mb-6 text-sm text-[#e87425]">
+          Il tabellone verrà definito al termine della fase a gironi con un sorteggio ufficiale.
         </div>
       )}
 
@@ -315,13 +298,11 @@ export default async function TabellonePage({
         </div>
         <div className="flex flex-col gap-3">
           {mobilePairs.map((pair, i) => (
-            <MobileMatchCard
-              key={i}
-              home={pair.home}
-              away={pair.away}
-              homeLabel={pair.homeLabel}
-              awayLabel={pair.awayLabel}
-            />
+            published ? (
+              <MobileMatchCard key={i} home={pair.home} away={pair.away} />
+            ) : (
+              <WaitingMobileCard key={i} />
+            )
           ))}
         </div>
       </div>
@@ -346,12 +327,14 @@ export default async function TabellonePage({
                     <div className="flex flex-col gap-3">
                       {Array.from({ length: 8 }, (_, i) => (
                         <div key={i} className="w-44">
-                          <DesktopMatchNode
-                            home={r16SlotMap.get(i * 2 + 1) ?? null}
-                            away={r16SlotMap.get(i * 2 + 2) ?? null}
-                            homeLabel={R16_SLOT_LABELS[i * 2 + 1]}
-                            awayLabel={R16_SLOT_LABELS[i * 2 + 2]}
-                          />
+                          {published ? (
+                            <DesktopMatchNode
+                              home={r16SlotMap.get(i * 2 + 1) ?? null}
+                              away={r16SlotMap.get(i * 2 + 2) ?? null}
+                            />
+                          ) : (
+                            <WaitingDesktopNode />
+                          )}
                         </div>
                       ))}
                     </div>
@@ -370,10 +353,14 @@ export default async function TabellonePage({
                   <div className="flex flex-col gap-3" style={{ marginTop }}>
                     {Array.from({ length: pairCount }, (_, i) => (
                       <div key={i} className="w-44">
-                        <DesktopMatchNode
-                          home={roundSlotMap.get(i * 2 + 1) ?? null}
-                          away={roundSlotMap.get(i * 2 + 2) ?? null}
-                        />
+                        {published ? (
+                          <DesktopMatchNode
+                            home={roundSlotMap.get(i * 2 + 1) ?? null}
+                            away={roundSlotMap.get(i * 2 + 2) ?? null}
+                          />
+                        ) : (
+                          <WaitingDesktopNode />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -389,19 +376,17 @@ export default async function TabellonePage({
             Finale 3°/4° posto
           </p>
           <div className="w-44">
-            <DesktopMatchNode
-              home={thirdPlaceMap.get(1) ?? null}
-              away={thirdPlaceMap.get(2) ?? null}
-            />
+            {published ? (
+              <DesktopMatchNode
+                home={thirdPlaceMap.get(1) ?? null}
+                away={thirdPlaceMap.get(2) ?? null}
+              />
+            ) : (
+              <WaitingDesktopNode />
+            )}
           </div>
         </div>
       </div>
-
-      {!groupDone && (
-        <p className="mt-4 text-xs text-[var(--muted)]">
-          ~ Accoppiamento provvisorio — può cambiare al termine della fase a gironi.
-        </p>
-      )}
     </div>
   );
 }

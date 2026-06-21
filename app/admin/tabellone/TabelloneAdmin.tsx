@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { TeamSelect } from '@/components/ui/TeamSelect';
 import type { Team, KnockoutSlotWithDetails } from '@/types/tournament';
 import type { R16MatchSlot } from '@/db/queries/knockout';
@@ -22,35 +22,31 @@ const QF_GROUP_COLOR: Record<number, string> = {
   4: '#a855f7',
 };
 
-function formatLocalInputValue(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Rome',
-    year: 'numeric',
-    month: '2-digit',
+function formatKickoff(date: Date): string {
+  return new Date(date).toLocaleString('it-IT', {
     day: '2-digit',
+    month: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
-  }).formatToParts(date);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '00';
-  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+    timeZone: 'Europe/Rome',
+  });
 }
 
 interface FormSlot {
   homeTeamId: number | null;
   awayTeamId: number | null;
-  scheduledAtLocal: string;
 }
 
 interface R16SlotCardProps {
   matchNum: number;
   match: R16MatchSlot;
-  teams: Team[];
+  homeOptions: Team[];
+  awayOptions: Team[];
   value: FormSlot;
   onChange: (matchNum: number, value: FormSlot) => void;
 }
 
-function R16SlotCard({ matchNum, match, teams, value, onChange }: R16SlotCardProps) {
+function R16SlotCard({ matchNum, match, homeOptions, awayOptions, value, onChange }: R16SlotCardProps) {
   const locked = match.status !== 'scheduled';
   const color = QF_GROUP_COLOR[R16_TO_QF[matchNum] ?? 1];
 
@@ -63,31 +59,25 @@ function R16SlotCard({ matchNum, match, teams, value, onChange }: R16SlotCardPro
         <p className="text-xs font-semibold text-white">Ottavo {matchNum}</p>
         <span className="text-[10px] text-[var(--muted)]">→ Quarto {R16_TO_QF[matchNum]}</span>
       </div>
+      <p className="text-xs text-[var(--muted)]">Orario: {formatKickoff(match.scheduledAt)}</p>
       {locked && (
         <p className="text-xs text-yellow-400">
           Partita già avviata — non modificabile da qui
         </p>
       )}
       <TeamSelect
-        teams={teams}
+        teams={homeOptions}
         value={value.homeTeamId}
         onChange={(teamId) => onChange(matchNum, { ...value, homeTeamId: teamId })}
         placeholder="Squadra in casa"
         disabled={locked}
       />
       <TeamSelect
-        teams={teams}
+        teams={awayOptions}
         value={value.awayTeamId}
         onChange={(teamId) => onChange(matchNum, { ...value, awayTeamId: teamId })}
         placeholder="Squadra in trasferta"
         disabled={locked}
-      />
-      <input
-        type="datetime-local"
-        value={value.scheduledAtLocal}
-        onChange={(e) => onChange(matchNum, { ...value, scheduledAtLocal: e.target.value })}
-        disabled={locked}
-        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#e87425] disabled:opacity-50 transition-colors"
       />
     </div>
   );
@@ -146,21 +136,71 @@ export function TabelloneAdmin({
   const [formSlots, setFormSlots] = useState<Record<number, FormSlot>>(() => {
     const initial: Record<number, FormSlot> = {};
     for (const m of r16Matches) {
-      initial[m.matchNum] = {
-        homeTeamId: m.homeTeamId,
-        awayTeamId: m.awayTeamId,
-        scheduledAtLocal: formatLocalInputValue(m.scheduledAt),
-      };
+      initial[m.matchNum] = { homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId };
     }
     return initial;
   });
+
+  const [showRandomConfirm, setShowRandomConfirm] = useState(false);
 
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isPendingSave, startSave] = useTransition();
 
+  // Every team id currently assigned to any slot (home or away, any match).
+  const usedTeamIds = useMemo(() => {
+    const set = new Set<number>();
+    for (const slot of Object.values(formSlots)) {
+      if (slot.homeTeamId !== null) set.add(slot.homeTeamId);
+      if (slot.awayTeamId !== null) set.add(slot.awayTeamId);
+    }
+    return set;
+  }, [formSlots]);
+
+  const assignedCount = useMemo(() => {
+    let count = 0;
+    for (const slot of Object.values(formSlots)) {
+      if (slot.homeTeamId !== null) count++;
+      if (slot.awayTeamId !== null) count++;
+    }
+    return count;
+  }, [formSlots]);
+
+  const allAssigned = assignedCount === 16 && usedTeamIds.size === 16;
+
+  // A picker may show a team that's free everywhere, plus whichever team it
+  // itself currently holds (so the input doesn't lose its own selection).
+  function optionsFor(matchNum: number, field: 'home' | 'away'): Team[] {
+    const ownValue = field === 'home' ? formSlots[matchNum]?.homeTeamId : formSlots[matchNum]?.awayTeamId;
+    return teams.filter((t) => t.id === ownValue || !usedTeamIds.has(t.id));
+  }
+
   function handleSlotChange(matchNum: number, value: FormSlot) {
     setFormSlots((prev) => ({ ...prev, [matchNum]: value }));
+  }
+
+  function handleRandomDrawClick() {
+    setShowRandomConfirm(true);
+  }
+
+  function handleConfirmRandomDraw() {
+    const shuffled = [...teams];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j] as Team, shuffled[i] as Team];
+    }
+    const next: Record<number, FormSlot> = {};
+    for (const m of r16Matches) {
+      const i = m.matchNum - 1;
+      next[m.matchNum] = {
+        homeTeamId: shuffled[i * 2]?.id ?? null,
+        awayTeamId: shuffled[i * 2 + 1]?.id ?? null,
+      };
+    }
+    setFormSlots(next);
+    setShowRandomConfirm(false);
+    setSaveError(null);
+    setSaveSuccess(false);
   }
 
   function handlePublishClick() {
@@ -202,7 +242,6 @@ export function TabelloneAdmin({
           matchNum: m.matchNum,
           homeTeamId: f?.homeTeamId ?? null,
           awayTeamId: f?.awayTeamId ?? null,
-          scheduledAt: `${f?.scheduledAtLocal ?? ''}:00+02:00`,
         };
       });
       const result = await saveR16BracketAction(slots);
@@ -230,8 +269,8 @@ export function TabelloneAdmin({
             </p>
             <p className="text-xs text-[var(--muted)] mt-0.5">
               {published
-                ? 'Visibile a tutti su /tabellone.'
-                : 'Nascosto al pubblico fino alla pubblicazione.'}
+                ? 'Visibile a tutti su /tabellone, con le squadre del sorteggio.'
+                : 'Il pubblico vede uno scheletro vuoto finché non pubblichi.'}
             </p>
           </div>
 
@@ -288,6 +327,45 @@ export function TabelloneAdmin({
         )}
       </div>
 
+      {/* ─── Random draw ─────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {!showRandomConfirm ? (
+          <button
+            type="button"
+            onClick={handleRandomDrawClick}
+            className="bg-[var(--card)] border border-[var(--border)] hover:border-[#e87425]/50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            🎲 Sorteggio casuale
+          </button>
+        ) : (
+          <div className="bg-[#e87425]/10 border border-[#e87425]/30 rounded-lg p-3 flex items-center justify-between gap-3 flex-wrap w-full">
+            <p className="text-sm text-white">
+              Verrà generato un sorteggio casuale con tutte e 16 le squadre. Puoi modificarlo prima di salvare. Confermi?
+            </p>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleConfirmRandomDraw}
+                className="bg-[#e87425] hover:bg-[#c55f0a] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Sì, sorteggia
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRandomConfirm(false)}
+                className="text-xs text-[var(--muted)] hover:text-white transition-colors px-2"
+              >
+                Annulla
+              </button>
+            </div>
+          </div>
+        )}
+
+        <p className={`text-sm font-semibold tabular-nums ${allAssigned ? 'text-green-400' : 'text-[var(--muted)]'}`}>
+          {usedTeamIds.size}/16 squadre assegnate
+        </p>
+      </div>
+
       {/* ─── Bracket editor ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_260px] gap-4">
         <div className="space-y-3">
@@ -299,14 +377,9 @@ export function TabelloneAdmin({
               key={m.matchNum}
               matchNum={m.matchNum}
               match={m}
-              teams={teams}
-              value={
-                formSlots[m.matchNum] ?? {
-                  homeTeamId: null,
-                  awayTeamId: null,
-                  scheduledAtLocal: formatLocalInputValue(m.scheduledAt),
-                }
-              }
+              homeOptions={optionsFor(m.matchNum, 'home')}
+              awayOptions={optionsFor(m.matchNum, 'away')}
+              value={formSlots[m.matchNum] ?? { homeTeamId: null, awayTeamId: null }}
               onChange={handleSlotChange}
             />
           ))}
@@ -321,14 +394,9 @@ export function TabelloneAdmin({
               key={m.matchNum}
               matchNum={m.matchNum}
               match={m}
-              teams={teams}
-              value={
-                formSlots[m.matchNum] ?? {
-                  homeTeamId: null,
-                  awayTeamId: null,
-                  scheduledAtLocal: formatLocalInputValue(m.scheduledAt),
-                }
-              }
+              homeOptions={optionsFor(m.matchNum, 'home')}
+              awayOptions={optionsFor(m.matchNum, 'away')}
+              value={formSlots[m.matchNum] ?? { homeTeamId: null, awayTeamId: null }}
               onChange={handleSlotChange}
             />
           ))}
@@ -364,15 +432,17 @@ export function TabelloneAdmin({
           {saveSuccess && <p className="text-xs text-green-400">✓ Tabellone salvato</p>}
           {saveError === null && !saveSuccess && (
             <p className="text-xs text-[var(--muted)]">
-              Salva gli ottavi: la pubblicazione resta una scelta separata.
+              {allAssigned
+                ? 'Sorteggio completo: la pubblicazione resta una scelta separata.'
+                : 'Assegna tutte e 16 le squadre per poter salvare.'}
             </p>
           )}
         </div>
         <button
           type="button"
           onClick={handleSave}
-          disabled={isPendingSave}
-          className="bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-60 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors flex-shrink-0"
+          disabled={isPendingSave || !allAssigned}
+          className="bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors flex-shrink-0"
         >
           {isPendingSave ? 'Salvataggio…' : 'Salva tabellone'}
         </button>

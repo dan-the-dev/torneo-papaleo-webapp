@@ -21,16 +21,14 @@ function isActive(href: string, pathname: string): boolean {
 
 function NavLinks({
   pathname,
-  links,
   onLinkClick,
 }: {
   pathname: string;
-  links: typeof navLinks;
   onLinkClick?: () => void;
 }) {
   return (
     <nav className="flex-1 px-3 py-2">
-      {links.map((l) => (
+      {navLinks.map((l) => (
         <Link
           key={l.href}
           href={l.href}
@@ -48,11 +46,9 @@ function NavLinks({
   );
 }
 
-export function Sidebar({ bracketPublished }: { bracketPublished: boolean }) {
+export function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-
-  const links = bracketPublished ? navLinks : navLinks.filter((l) => l.href !== '/tabellone');
 
   function close() {
     setIsOpen(false);
@@ -69,7 +65,7 @@ export function Sidebar({ bracketPublished }: { bracketPublished: boolean }) {
           </Link>
           <ThemeToggle />
         </div>
-        <NavLinks pathname={pathname} links={links} />
+        <NavLinks pathname={pathname} />
         <div className="px-5 py-4 border-t border-[var(--border)]">
           <p className="text-xs text-[var(--muted)] leading-relaxed">
             Torneo Andrea Papaleo 2026
@@ -137,7 +133,7 @@ export function Sidebar({ bracketPublished }: { bracketPublished: boolean }) {
                 </svg>
               </button>
             </div>
-            <NavLinks pathname={pathname} links={links} onLinkClick={close} />
+            <NavLinks pathname={pathname} onLinkClick={close} />
             <div className="px-5 py-4 border-t border-[var(--border)]">
               <p className="text-xs text-[var(--muted)]">Torneo Andrea Papaleo 2026</p>
             </div>
