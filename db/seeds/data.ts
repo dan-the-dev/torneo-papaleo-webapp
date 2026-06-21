@@ -4,31 +4,84 @@ export interface TeamSeed {
   players: Array<{ name: string; number: number | null }>;
 }
 
-function placeholderPlayers(): Array<{ name: string; number: number | null }> {
-  return Array.from({ length: 5 }, (_, i) => ({
-    name: `Giocatore ${i + 1}`,
-    number: i + 1,
-  }));
+function players(...names: string[]): Array<{ name: string; number: number | null }> {
+  return names.map((name) => ({ name, number: null }));
 }
 
-// 16 official tournament teams. Player names are placeholders — will be updated.
+// 16 official tournament teams with real rosters.
 export const TEAMS: TeamSeed[] = [
-  { name: "LASSU' FC",                   short_name: 'LSS', players: placeholderPlayers() },
-  { name: 'FC INGIOCABILI (FORSE)',       short_name: 'ING', players: placeholderPlayers() },
-  { name: 'CRAZY TEAM',                  short_name: 'CRZ', players: placeholderPlayers() },
-  { name: 'SQUADRA NERA',                short_name: 'SNR', players: placeholderPlayers() },
-  { name: 'F.C. MURETTI',               short_name: 'MUR', players: placeholderPlayers() },
-  { name: 'LA CASETTA FC',              short_name: 'CAS', players: placeholderPlayers() },
-  { name: "FC. AL LHUNEDI'",             short_name: 'LHU', players: placeholderPlayers() },
-  { name: 'F.C. PACHA',                 short_name: 'PAC', players: placeholderPlayers() },
-  { name: 'AS SONION',                  short_name: 'SON', players: placeholderPlayers() },
-  { name: 'I CRACKS',                   short_name: 'CRK', players: placeholderPlayers() },
-  { name: 'BLOCCO-02',                  short_name: 'BLK', players: placeholderPlayers() },
-  { name: 'GARPEZ UNITED',              short_name: 'GAR', players: placeholderPlayers() },
-  { name: 'TRANCIO SICILIANO',          short_name: 'TRC', players: placeholderPlayers() },
-  { name: 'VERDE E GIARDINI MONDELLO',  short_name: 'VGM', players: placeholderPlayers() },
-  { name: 'ARCORESE',                   short_name: 'ARC', players: placeholderPlayers() },
-  { name: 'LE BUMME',                   short_name: 'BUM', players: placeholderPlayers() },
+  { name: "LASSU' FC",                   short_name: 'LSS', players: players(
+    'Alessandro Papaleo', 'Daniele Bilello', 'Thomas Occhipinti', 'Alessandro Cozzi',
+    'Alessio Centemeri', 'Manuel Squeo', 'Jacopo Alberto Bruna', 'Leo Martelli',
+    'Riccardo Romanò', 'Simone Meroni', 'Matteo Macciola', 'Matteo Alberici', 'Giacomo Ferrario',
+  ) },
+  { name: 'FC INGIOCABILI (FORSE)',       short_name: 'ING', players: players(
+    'Davide Papaleo', 'Marco Conti', 'Gabriele De Filippis', 'Pietro Renato Masciullo',
+    'Lorenzo Ferrari', 'Federico Pasqualotto', 'Emanuele Ranieri', 'Giorgio Del Gaudio',
+  ) },
+  { name: 'CRAZY TEAM',                  short_name: 'CRZ', players: players(
+    'Nicola Sbarbaro', 'Cristian Giulio Tosarello', 'Federico Rapillo', 'Luca Di Luciano',
+    'Federico Giuseppe Bertoni', 'Davide Gasparini', 'Simone Santonocito', 'Gabriele Codarri',
+  ) },
+  { name: 'SQUADRA NERA',                short_name: 'SNR', players: players(
+    'João Pedro Kirsch Giroletti', 'Simone Passerini', 'Tamim Alsaid', 'Manuel Distefano',
+    'Daniele Ciaccia', 'Nicholas Masi', 'Filippo Gabriele Savarino', 'Fabio Crisafulli',
+    'Marco Airaghi', 'Dylan Ragaiolo',
+  ) },
+  { name: 'F.C. MURETTI',               short_name: 'MUR', players: players(
+    'Emanuel Zainaghi', 'Angelo De Martino', 'Christian Sofia', 'Andrea Di Bartolo',
+    'Antonio Torcasio', 'Francesco Larovere', 'Riccardo Meroni', 'Gabriele Manupelli',
+    'Christian Breda', 'Davide Dioguardi', 'Luca Silva',
+  ) },
+  { name: 'LA CASETTA FC',              short_name: 'CAS', players: players(
+    'Niccolò Bianchi Cavalieri', 'Matteo Galelli', 'Federico Gaspari', 'Tommaso Grillo',
+    'Marco Casciello', 'Daniele Coccia', 'Lorenzo Carioti', 'Tommaso Strada',
+    'Simone Papillo', 'Martino Dezuanni',
+  ) },
+  { name: "FC. AL LHUNEDI'",             short_name: 'LHU', players: players(
+    'Davide Cataldo', 'Fabio Chierici', 'Benedetto Di Adamo', 'Mattia De Maio',
+    'Marco De Candia', 'Matteo Castiglioni', 'Davide Cimbro', 'Bogdan Catalin Gora',
+    'Riccardo Fantinelli', 'Gianmarco Paolini', 'Matteo Pilotto', 'Davide Di Pasqua',
+  ) },
+  { name: 'F.C. PACHA',                 short_name: 'PAC', players: players(
+    'Alessandro Galli', 'Davide Piccinin', 'Francesco Deponte', 'Andrea Mariani',
+    'Christian Mella', 'Gianni Esposito', 'Mattia Brognara',
+  ) },
+  { name: 'AS SONION',                  short_name: 'SON', players: players(
+    'Davide Grosso', 'Davide Curtarelli', 'Mattia Simonato', 'Andrea Pozzi',
+    'Pietro Lecchi', 'Francesco Morini', 'Davide Lorenzon',
+  ) },
+  { name: 'I CRACKS',                   short_name: 'CRK', players: players(
+    'Daniele Franceschini', 'Christian Zambelli', 'Tommaso Cotta Ramusino', 'Luca Ceribelli',
+    'Riccardo Raimoldi', 'Andrea Dalto', 'Paolo Di Bartolo', 'Manuel Pozzi',
+  ) },
+  { name: 'BLOCCO-02',                  short_name: 'BLK', players: players(
+    'Luca Tregnaghi', 'Simone Gelati', 'Alessio Bastianoni', 'Luca Aurel Gorni',
+    'Mirko De Patto', 'Riccardo Brazzoli',
+  ) },
+  { name: 'GARPEZ UNITED',              short_name: 'GAR', players: players(
+    'Gionatan Casati', 'Diego Marazzi', 'Matteo Baldo', 'Andrea Borroni',
+    'Gabriele Mingrone', 'Daniele Scillia', 'Riccardo Vincent Conti', 'Antonio Mingrone',
+    'Tommaso Dezuanni', 'Abdellah Ouanchi',
+  ) },
+  { name: 'TRANCIO SICILIANO',          short_name: 'TRC', players: players(
+    'Danilo Leone', 'Davide Doglio', 'Andrea Pipini', 'Matteo Pappacena',
+    'Simone Russo', 'Daniele Russo', 'Andrea Hoxholli',
+  ) },
+  { name: 'VERDE E GIARDINI MONDELLO',  short_name: 'VGM', players: players(
+    'Gabriele Elia Toffoletto', 'Paolo Banfi', 'Yumo Jiang', 'Lorenzo Frassinelli',
+    'Francesco Mondello', 'Luca Belotti', 'Nicolò Natoli', 'Andrea Grazzi',
+    'Tommaso Minora', 'Andrea Cesaratto',
+  ) },
+  { name: 'ARCORESE',                   short_name: 'ARC', players: players(
+    'Thomas Bartezaghi', 'Alessandro Federici', 'Andrea Auci', 'Leonardo Policastri',
+    'Davide Donzelli', 'Alessandro Aina', 'Andrea Fiore', 'Riccardo Zappatore',
+    'Daniel Balestrucci',
+  ) },
+  { name: 'LE BUMME',                   short_name: 'BUM', players: players(
+    'Mario Canciani', 'Vittorio Progresso', 'Silvio Olivella', 'Mario Chianello',
+    'Nicolò Olivella', 'Mattia Giugnatico', 'Alessio Pellegrino',
+  ) },
 ];
 
 // Real group-stage schedule. Times are Europe/Rome (UTC+2 in summer); stored as UTC via pg.
