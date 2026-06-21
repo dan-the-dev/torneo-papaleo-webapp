@@ -185,6 +185,15 @@ async function computeOverallRankings(client: PoolClient): Promise<number[]> {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
+// Cheap pre-check so callers can skip the full recalculation while the group
+// stage is still in progress, when the bracket has nothing to update yet.
+export async function hasAnyFinishedGroupMatch(client: PoolClient): Promise<boolean> {
+  const { rows } = await client.query<{ exists: boolean }>(
+    `SELECT EXISTS(SELECT 1 FROM matches WHERE round = 'group' AND status = 'finished') AS exists`,
+  );
+  return rows[0]?.exists ?? false;
+}
+
 export async function syncBracket(client: PoolClient): Promise<void> {
   const { rows: unfinishedRows } = await client.query<{ unfinished: string }>(
     `SELECT COUNT(*)::text AS unfinished

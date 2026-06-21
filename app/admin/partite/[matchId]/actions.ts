@@ -3,9 +3,34 @@
 import { requireAdmin } from '@/lib/auth';
 import { startMatchInDb, finishMatchInDb } from '@/db/queries/matches';
 import { MATCH_SLOT_MINUTES } from '@/lib/schedule';
-import { syncBracket } from '@/lib/bracket';
+import { syncBracket, hasAnyFinishedGroupMatch } from '@/lib/bracket';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import pool from '@/db/client';
+
+// ─── Bracket sync (off the hot path) ──────────────────────────────────────────
+// Goal/removal scoring must feel instant, but the knockout bracket only needs
+// to settle within a second or two — so it's synced after the response is
+// sent, on its own connection, and skipped entirely while no group match has
+// finished yet (the bracket has nothing to recompute at that point).
+async function syncBracketInBackground(): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    if (!(await hasAnyFinishedGroupMatch(client))) {
+      await client.query('ROLLBACK');
+      return;
+    }
+    await syncBracket(client);
+    await client.query('COMMIT');
+    revalidatePath('/tabellone');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Background bracket sync failed:', err);
+  } finally {
+    client.release();
+  }
+}
 
 // ─── Event actions ────────────────────────────────────────────────────────────
 
@@ -54,16 +79,12 @@ export async function addEventAction(
       [scoreHome, scoreAway, matchId],
     );
 
-    await syncBracket(client);
-
     await client.query('COMMIT');
 
-    revalidatePath('/');
-    revalidatePath('/gironi');
+    revalidatePath(`/admin/partite/${matchId}`);
     revalidatePath(`/gironi/${matchId}`);
     revalidatePath('/marcatori');
-    revalidatePath('/tabellone');
-    revalidatePath(`/admin/partite/${matchId}`);
+    after(syncBracketInBackground);
 
     return { kind: 'ok', scoreHome, scoreAway, eventId };
   } catch (err) {
@@ -115,15 +136,12 @@ export async function removeEventAction(
       [scoreHome, scoreAway, matchId],
     );
 
-    await syncBracket(client);
-
     await client.query('COMMIT');
 
-    revalidatePath('/');
-    revalidatePath('/gironi');
-    revalidatePath('/marcatori');
-    revalidatePath('/tabellone');
     revalidatePath(`/admin/partite/${matchId}`);
+    revalidatePath(`/gironi/${matchId}`);
+    revalidatePath('/marcatori');
+    after(syncBracketInBackground);
 
     return { kind: 'ok', scoreHome, scoreAway };
   } catch (err) {
@@ -191,9 +209,9 @@ export async function startMatchAction(
         conflictAwayName: result.conflictMatch.team_away.name,
       };
     }
-    revalidatePath('/');
     revalidatePath('/admin/partite');
     revalidatePath(`/admin/partite/${matchId}`);
+    revalidatePath(`/gironi/${matchId}`);
     return { kind: 'ok' };
   } catch (err) {
     console.error(err);
@@ -215,9 +233,11 @@ export async function finishMatchAction(
   }
   try {
     await finishMatchInDb(matchId, MATCH_SLOT_MINUTES);
-    revalidatePath('/');
     revalidatePath('/admin/partite');
     revalidatePath(`/admin/partite/${matchId}`);
+    revalidatePath(`/gironi/${matchId}`);
+    revalidatePath('/marcatori');
+    after(syncBracketInBackground);
     return { kind: 'ok' };
   } catch (err) {
     console.error(err);

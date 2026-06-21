@@ -14,7 +14,9 @@ function createPool(): Pool {
   });
 }
 
+// Always cache on globalThis so warm serverless invocations (and dev HMR
+// reloads) reuse one pool instead of opening a fresh one per request.
 const pool = globalThis.__pgPool ?? createPool();
-if (process.env['NODE_ENV'] !== 'production') globalThis.__pgPool = pool;
+globalThis.__pgPool = pool;
 
 export default pool;

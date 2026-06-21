@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useOptimistic, useState, useTransition } from 'react';
 import Link from 'next/link';
 import type {
   MatchDetail,
@@ -26,6 +26,7 @@ interface PlayerRowProps {
   matchId: number;
   homeTeamId: number;
   awayTeamId: number;
+  onGoalStart: (player: Player, team: Team) => void;
   onEventAdded: (
     result: AddEventResult & { kind: 'ok' },
     player: Player,
@@ -40,6 +41,7 @@ function PlayerRow({
   matchId,
   homeTeamId,
   awayTeamId,
+  onGoalStart,
   onEventAdded,
 }: PlayerRowProps) {
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,7 @@ function PlayerRow({
   function handleGoal() {
     if (isPending) return;
     startTransition(async () => {
+      onGoalStart(player, team);
       const result = await addEventAction(
         matchId,
         player.id,
@@ -80,8 +83,12 @@ function PlayerRow({
           disabled={isPending}
           className={`flex items-center gap-1.5 min-h-[44px] px-3 text-sm font-semibold text-white hover:opacity-90 active:opacity-75 disabled:opacity-50 rounded-lg transition-opacity shrink-0 ${team.id === homeTeamId ? 'bg-[#e87425]' : 'bg-[#141414] border border-[var(--border)]'}`}
         >
-          <span>⚽</span>
-          <span>{isPending ? '…' : 'Goal'}</span>
+          {isPending ? (
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+          ) : (
+            <span>⚽</span>
+          )}
+          <span>Goal</span>
         </button>
       </div>
       {error !== null && (
@@ -105,16 +112,61 @@ interface MatchAnalystProps {
   awayPlayers: Player[];
 }
 
+interface ScoreboardState {
+  scoreHome: number;
+  scoreAway: number;
+  events: MatchEventWithDetails[];
+}
+
+type ScoreboardOptimisticAction =
+  | { type: 'add-goal'; tempId: number; player: Player; team: Team; minute: number | null }
+  | { type: 'remove-goal'; eventId: number };
+
 export function MatchAnalyst({
   match,
   homePlayers,
   awayPlayers,
 }: MatchAnalystProps) {
-  const [scoreHome, setScoreHome] = useState(match.score_home ?? 0);
-  const [scoreAway, setScoreAway] = useState(match.score_away ?? 0);
-  const [events, setEvents] = useState<MatchEventWithDetails[]>(
-    match.events.filter((e) => e.type === 'goal'),
+  const [scoreboard, setScoreboard] = useState<ScoreboardState>({
+    scoreHome: match.score_home ?? 0,
+    scoreAway: match.score_away ?? 0,
+    events: match.events.filter((e) => e.type === 'goal'),
+  });
+
+  // Optimistic overlay: applied the instant "Goal" is tapped, reverts on its
+  // own once the enclosing transition settles without a confirmed update.
+  const [optimisticScoreboard, applyOptimistic] = useOptimistic(
+    scoreboard,
+    (current: ScoreboardState, action: ScoreboardOptimisticAction): ScoreboardState => {
+      if (action.type === 'add-goal') {
+        const isHome = action.team.id === match.team_home_id;
+        const newEvent: MatchEventWithDetails = {
+          id: action.tempId,
+          match_id: match.id,
+          player_id: action.player.id,
+          team_id: action.team.id,
+          type: 'goal',
+          minute: action.minute,
+          player: action.player,
+          team: action.team,
+        };
+        return {
+          scoreHome: current.scoreHome + (isHome ? 1 : 0),
+          scoreAway: current.scoreAway + (isHome ? 0 : 1),
+          events: [...current.events, newEvent],
+        };
+      }
+      const removed = current.events.find((e) => e.id === action.eventId);
+      if (!removed) return current;
+      const isHome = removed.team_id === match.team_home_id;
+      return {
+        scoreHome: current.scoreHome - (isHome ? 1 : 0),
+        scoreAway: current.scoreAway - (isHome ? 0 : 1),
+        events: current.events.filter((e) => e.id !== action.eventId),
+      };
+    },
   );
+
   const [status, setStatus] = useState(match.status);
   const [notes, setNotes] = useState(match.notes ?? '');
   const [notesSaved, setNotesSaved] = useState(false);
@@ -127,14 +179,16 @@ export function MatchAnalyst({
   const [isPendingRemove, startRemove] = useTransition();
   const [isPendingNotes, startNotes] = useTransition();
 
+  function handleGoalStart(player: Player, team: Team) {
+    applyOptimistic({ type: 'add-goal', tempId: -Date.now(), player, team, minute: null });
+  }
+
   function handleEventAdded(
     result: AddEventResult & { kind: 'ok' },
     player: Player,
     team: Team,
     minute: number | null,
   ) {
-    setScoreHome(result.scoreHome);
-    setScoreAway(result.scoreAway);
     const newEvent: MatchEventWithDetails = {
       id: result.eventId,
       match_id: match.id,
@@ -145,11 +199,16 @@ export function MatchAnalyst({
       player,
       team,
     };
-    setEvents((prev) => [...prev, newEvent]);
+    setScoreboard((prev) => ({
+      scoreHome: result.scoreHome,
+      scoreAway: result.scoreAway,
+      events: [...prev.events, newEvent],
+    }));
   }
 
   function handleRemoveEvent(eventId: number) {
     startRemove(async () => {
+      applyOptimistic({ type: 'remove-goal', eventId });
       const result = await removeEventAction(
         match.id,
         eventId,
@@ -157,9 +216,11 @@ export function MatchAnalyst({
         match.team_away_id,
       );
       if (result.kind === 'ok') {
-        setScoreHome(result.scoreHome);
-        setScoreAway(result.scoreAway);
-        setEvents((prev) => prev.filter((e) => e.id !== eventId));
+        setScoreboard((prev) => ({
+          scoreHome: result.scoreHome,
+          scoreAway: result.scoreAway,
+          events: prev.events.filter((e) => e.id !== eventId),
+        }));
       }
     });
   }
@@ -206,6 +267,7 @@ export function MatchAnalyst({
     });
   }
 
+  const { scoreHome, scoreAway, events } = optimisticScoreboard;
   const sortedEvents = [...events].sort(
     (a, b) => (a.minute ?? 999) - (b.minute ?? 999),
   );
@@ -230,6 +292,7 @@ export function MatchAnalyst({
               matchId={match.id}
               homeTeamId={match.team_home_id}
               awayTeamId={match.team_away_id}
+              onGoalStart={handleGoalStart}
               onEventAdded={handleEventAdded}
             />
           ))}
@@ -442,6 +505,7 @@ export function MatchAnalyst({
               matchId={match.id}
               homeTeamId={match.team_home_id}
               awayTeamId={match.team_away_id}
+              onGoalStart={handleGoalStart}
               onEventAdded={handleEventAdded}
             />
           ))}
