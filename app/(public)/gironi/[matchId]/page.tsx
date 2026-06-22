@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getMatchById } from '@/db/queries/matches';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { LiveRefresher } from '@/components/ui/LiveRefresher';
 import type { EventType } from '@/types/tournament';
 
 function formatDateTime(date: Date): string {
@@ -53,6 +54,8 @@ export default async function MatchDetailPage({
 
   return (
     <div>
+      <LiveRefresher enabled={match.status === 'live'} />
+
       <div className="mb-4 text-sm text-[var(--muted)] capitalize">
         {roundLabels[match.round] ?? match.round}
       </div>

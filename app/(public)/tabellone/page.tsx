@@ -4,6 +4,7 @@ import { getKnockoutPlaceholderLabel } from '@/lib/bracketLabels';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
 import Link from 'next/link';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { LiveRefresher } from '@/components/ui/LiveRefresher';
 
 const ROUND_LABELS: Record<Round, string> = {
   r16: 'Ottavi',
@@ -227,6 +228,7 @@ export default async function TabellonePage({
   const published = await isBracketPublished();
   const params = await searchParams;
   const slots = await getKnockoutSlots();
+  const hasLiveMatch = slots.some((s) => s.match?.status === 'live');
 
   // Index slots by round → slot_number for O(1) lookup
   const slotsByRound = new Map<Round, Map<number, KnockoutSlotWithDetails>>();
@@ -279,6 +281,8 @@ export default async function TabellonePage({
 
   return (
     <div>
+      <LiveRefresher enabled={hasLiveMatch} />
+
       <h1 className="text-2xl font-bold text-[var(--foreground)] mb-4">Tabellone</h1>
 
       {!published && (

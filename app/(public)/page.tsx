@@ -3,6 +3,7 @@ import { getLiveMatches, getNextScheduledMatch, getMatchesToday, getLiveMatchGoa
 import { getPodiumData, type PodiumData } from '@/db/queries/podium';
 import { getTournamentState } from '@/lib/tournament';
 import { MatchCard } from '@/components/ui/MatchCard';
+import { LiveRefresher } from '@/components/ui/LiveRefresher';
 import type { MatchWithTeams } from '@/types/tournament';
 
 export const dynamic = 'force-dynamic';
@@ -237,6 +238,8 @@ export default async function HomePage() {
 
   return (
     <div>
+      <LiveRefresher enabled={!isFinished} />
+
       {/* ─── Hero ───────────────────────────────────────────────────── */}
       <section className="-mx-4 -mt-6 px-6 py-14 bg-gradient-to-b from-[var(--background)] to-[var(--card)] text-center border-b border-[var(--border)] mb-8">
         {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,5 +1,6 @@
 import { getAllGroups, getGroupWithMatches } from '@/db/queries/groups';
 import { MatchCard } from '@/components/ui/MatchCard';
+import { LiveRefresher } from '@/components/ui/LiveRefresher';
 import type { GroupStanding, MatchWithTeams } from '@/types/tournament';
 
 export const dynamic = 'force-dynamic';
@@ -115,6 +116,8 @@ export default async function GironiPage() {
 
   return (
     <div>
+      <LiveRefresher enabled={!isFinished} />
+
       <h1 className="text-2xl font-bold text-[var(--foreground)] mb-6">Classifica</h1>
 
       {/* Standings */}
