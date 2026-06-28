@@ -66,10 +66,20 @@ export function Sidebar() {
           <ThemeToggle />
         </div>
         <NavLinks pathname={pathname} />
-        <div className="px-5 py-4 border-t border-[var(--border)]">
+        <div className="px-5 py-4 border-t border-[var(--border)] space-y-1">
           <p className="text-xs text-[var(--muted)] leading-relaxed">
             Torneo Andrea Papaleo 2026
           </p>
+          <Link
+            href="/privacy"
+            className={`text-xs transition-colors ${
+              pathname === '/privacy'
+                ? 'text-[#e87425] font-medium'
+                : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+          >
+            Privacy
+          </Link>
         </div>
       </aside>
 
@@ -134,8 +144,19 @@ export function Sidebar() {
               </button>
             </div>
             <NavLinks pathname={pathname} onLinkClick={close} />
-            <div className="px-5 py-4 border-t border-[var(--border)]">
+            <div className="px-5 py-4 border-t border-[var(--border)] space-y-1">
               <p className="text-xs text-[var(--muted)]">Torneo Andrea Papaleo 2026</p>
+              <Link
+                href="/privacy"
+                onClick={close}
+                className={`text-xs transition-colors ${
+                  pathname === '/privacy'
+                    ? 'text-[#e87425] font-medium'
+                    : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                }`}
+              >
+                Privacy
+              </Link>
             </div>
           </aside>
         </>
