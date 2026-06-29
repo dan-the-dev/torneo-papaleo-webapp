@@ -142,15 +142,15 @@ export default function RegolamentoPage() {
         <Section number="4" title="Date e sede">
           <p className="font-medium text-[var(--foreground)] mb-1">Fase a gironi</p>
           <ul className="space-y-1 mb-3">
-            <Li>Lunedi 29 giugno 2025</Li>
-            <Li>Mercoledi 1° luglio 2025</Li>
-            <Li>Venerdi 3 luglio 2025</Li>
-            <Li>Lunedi 6 luglio 2025</Li>
+            <Li>Lunedi 29 giugno 2026</Li>
+            <Li>Mercoledi 1° luglio 2026</Li>
+            <Li>Venerdi 3 luglio 2026</Li>
+            <Li>Lunedi 6 luglio 2026</Li>
           </ul>
           <p className="font-medium text-[var(--foreground)] mb-1">Fase a eliminazione diretta</p>
           <ul className="space-y-1 mb-3">
-            <Li>Venerdi 10 luglio 2025 — Ottavi e Quarti di finale</Li>
-            <Li>Sabato 11 luglio 2025 — Semifinali e Finali</Li>
+            <Li>Venerdi 10 luglio 2026 — Ottavi e Quarti di finale</Li>
+            <Li>Sabato 11 luglio 2026 — Semifinali e Finali</Li>
           </ul>
           <p className="font-medium text-[var(--foreground)] mb-1">Sede</p>
           <ul className="space-y-1">
