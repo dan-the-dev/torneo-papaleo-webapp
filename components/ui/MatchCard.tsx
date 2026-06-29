@@ -1,6 +1,8 @@
-import Link from 'next/link';
+'use client';
+
 import type { MatchWithTeams } from '@/types/tournament';
 import { StatusBadge } from './StatusBadge';
+import { MatchDetailLink } from '@/components/navigation/MatchDetailLink';
 
 interface MatchCardProps {
   match: MatchWithTeams;
@@ -30,7 +32,7 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
   const sa = match.score_away;
 
   return (
-    <Link href={`/gironi/${match.id}`} className="block group cursor-pointer">
+    <MatchDetailLink matchId={match.id} className="block group cursor-pointer">
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 group-hover:border-[#e87425]/70 group-hover:bg-[var(--surface-hover)] transition-all">
         {showGroup && (
           <div className="text-xs text-[var(--muted)] mb-2 font-medium uppercase tracking-wide">
@@ -79,6 +81,6 @@ export function MatchCard({ match, showGroup = false }: MatchCardProps) {
           <span className="text-[var(--muted)] group-hover:text-[#e87425] transition-colors flex-shrink-0 text-base leading-none">›</span>
         </div>
       </div>
-    </Link>
+    </MatchDetailLink>
   );
 }

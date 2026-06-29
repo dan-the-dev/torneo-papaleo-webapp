@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { loginAction } from './actions';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, null);
@@ -44,13 +45,14 @@ export function LoginForm() {
           </p>
         )}
 
-        <button
+        <LoadingButton
           type="submit"
-          disabled={pending}
-          className="w-full bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
+          loading={pending}
+          loadingText="Accesso in corso..."
+          className="w-full bg-[#e87425] hover:bg-[#c55f0a] text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
         >
-          {pending ? 'Accesso in corso...' : 'Accedi'}
-        </button>
+          Accedi
+        </LoadingButton>
       </div>
     </form>
   );

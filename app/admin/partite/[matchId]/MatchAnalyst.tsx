@@ -1,7 +1,9 @@
 'use client';
 
 import { useOptimistic, useState, useTransition } from 'react';
-import Link from 'next/link';
+import { LoadingLink } from '@/components/navigation/LoadingLink';
+import { LoadingButton } from '@/components/ui/LoadingButton';
+import { Spinner } from '@/components/ui/Spinner';
 import type {
   MatchDetail,
   Player,
@@ -77,19 +79,15 @@ function PlayerRow({
         <span className="flex-1 text-sm text-white truncate min-w-0">
           {player.name}
         </span>
-        <button
+        <LoadingButton
           type="button"
           onClick={handleGoal}
-          disabled={isPending}
-          className={`flex items-center gap-1.5 min-h-[44px] px-3 text-sm font-semibold text-white hover:opacity-90 active:opacity-75 disabled:opacity-50 rounded-lg transition-opacity shrink-0 ${team.id === homeTeamId ? 'bg-[#e87425]' : 'bg-[#141414] border border-[var(--border)]'}`}
+          loading={isPending}
+          className={`min-h-[44px] px-3 text-sm font-semibold text-white hover:opacity-90 active:opacity-75 rounded-lg transition-opacity shrink-0 ${team.id === homeTeamId ? 'bg-[#e87425]' : 'bg-[#141414] border border-[var(--border)]'}`}
         >
-          {isPending ? (
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-          ) : (
-            <span>⚽</span>
-          )}
+          {!isPending && <span>⚽</span>}
           <span>Goal</span>
-        </button>
+        </LoadingButton>
       </div>
       {error !== null && (
         <p className="px-3 pb-2 text-xs text-red-400">{error}</p>
@@ -176,6 +174,7 @@ export function MatchAnalyst({
 
   const [isPendingStart, startStart] = useTransition();
   const [isPendingFinish, startFinish] = useTransition();
+  const [removingEventId, setRemovingEventId] = useState<number | null>(null);
   const [isPendingRemove, startRemove] = useTransition();
   const [isPendingNotes, startNotes] = useTransition();
 
@@ -208,6 +207,7 @@ export function MatchAnalyst({
 
   function handleRemoveEvent(eventId: number) {
     startRemove(async () => {
+      setRemovingEventId(eventId);
       applyOptimistic({ type: 'remove-goal', eventId });
       const result = await removeEventAction(
         match.id,
@@ -222,6 +222,7 @@ export function MatchAnalyst({
           events: prev.events.filter((e) => e.id !== eventId),
         }));
       }
+      setRemovingEventId(null);
     });
   }
 
@@ -340,15 +341,16 @@ export function MatchAnalyst({
         {/* Lifecycle controls */}
         <div className="px-4 py-4 border-b border-[var(--border)] shrink-0 space-y-3">
           {status === 'scheduled' && conflictInfo === null && (
-            <button
+            <LoadingButton
               type="button"
               onClick={handleStart}
-              disabled={isPendingStart}
-              className="w-full flex items-center justify-center gap-2 bg-green-800 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
+              loading={isPendingStart}
+              loadingText="Avvio in corso…"
+              className="w-full bg-green-800 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm"
             >
               <span className="w-2 h-2 rounded-full bg-white shrink-0" />
-              {isPendingStart ? 'Avvio in corso…' : 'Inizia partita'}
-            </button>
+              Inizia partita
+            </LoadingButton>
           )}
 
           {conflictInfo !== null && (
@@ -360,12 +362,13 @@ export function MatchAnalyst({
                 </span>{' '}
                 è già in corso. Terminala prima.
               </p>
-              <Link
+              <LoadingLink
                 href={`/admin/partite/${conflictInfo.id}`}
+                showSpinner
                 className="text-xs text-[#e87425] hover:text-white transition-colors block"
               >
                 → Vai a quella partita
-              </Link>
+              </LoadingLink>
             </div>
           )}
 
@@ -393,14 +396,15 @@ export function MatchAnalyst({
                 . Confermi?
               </p>
               <div className="flex gap-2 items-center">
-                <button
+                <LoadingButton
                   type="button"
                   onClick={handleFinish}
-                  disabled={isPendingFinish}
-                  className="flex-1 bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-60 text-white font-semibold py-2 rounded-lg text-sm transition-colors"
+                  loading={isPendingFinish}
+                  loadingText="Chiusura…"
+                  className="flex-1 bg-[#e87425] hover:bg-[#c55f0a] text-white font-semibold py-2 rounded-lg text-sm transition-colors"
                 >
-                  {isPendingFinish ? 'Chiusura…' : 'Sì, termina'}
-                </button>
+                  Sì, termina
+                </LoadingButton>
                 <button
                   type="button"
                   onClick={() => setShowFinishConfirm(false)}
@@ -447,9 +451,13 @@ export function MatchAnalyst({
                       onClick={() => handleRemoveEvent(event.id)}
                       disabled={isPendingRemove}
                       title="Rimuovi"
-                      className="text-[var(--muted)] hover:text-red-400 transition-colors text-xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed mt-0.5"
+                      className="text-[var(--muted)] hover:text-red-400 transition-colors text-xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed mt-0.5 min-w-[20px] flex items-center justify-center"
                     >
-                      ✕
+                      {removingEventId === event.id ? (
+                        <Spinner size="xs" className="border-[var(--muted)]/40 border-t-[var(--muted)]" />
+                      ) : (
+                        '✕'
+                      )}
                     </button>
                   </div>
                 );
@@ -472,18 +480,19 @@ export function MatchAnalyst({
               placeholder="Note sulla partita…"
               className="flex-1 min-w-0 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-[#e87425]"
             />
-            <button
+            <LoadingButton
               type="button"
               onClick={handleSaveNotes}
-              disabled={isPendingNotes}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors shrink-0 disabled:opacity-60 ${
+              loading={isPendingNotes}
+              loadingText="…"
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors shrink-0 ${
                 notesSaved
                   ? 'bg-green-800/30 border-green-600/40 text-green-400'
                   : 'bg-[var(--card)] border-[var(--border)] text-[var(--muted)] hover:text-white hover:border-[#e87425]/50'
               }`}
             >
-              {notesSaved ? '✓ Salvato' : isPendingNotes ? '…' : 'Salva'}
-            </button>
+              {notesSaved ? '✓ Salvato' : 'Salva'}
+            </LoadingButton>
           </div>
         </div>
       </div>

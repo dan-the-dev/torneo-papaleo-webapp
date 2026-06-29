@@ -2,7 +2,8 @@ import { getKnockoutSlots } from '@/db/queries/knockout';
 import { isBracketPublished } from '@/db/queries/config';
 import { getKnockoutPlaceholderLabel } from '@/lib/bracketLabels';
 import type { KnockoutSlotWithDetails, Round } from '@/types/tournament';
-import Link from 'next/link';
+import { MatchDetailLink } from '@/components/navigation/MatchDetailLink';
+import { TabelloneRoundChips } from '@/components/navigation/TabelloneRoundChips';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LiveRefresher } from '@/components/ui/LiveRefresher';
 
@@ -115,9 +116,9 @@ function DesktopMatchNode({
 
   if (match) {
     return (
-      <Link href={`/gironi/${match.id}`} className="block group cursor-pointer">
+      <MatchDetailLink matchId={match.id} className="block group cursor-pointer">
         {node}
-      </Link>
+      </MatchDetailLink>
     );
   }
   return node;
@@ -210,9 +211,9 @@ function MobileMatchCard({
 
   if (match) {
     return (
-      <Link href={`/gironi/${match.id}`} className="block cursor-pointer">
+      <MatchDetailLink matchId={match.id} className="block cursor-pointer">
         {card}
-      </Link>
+      </MatchDetailLink>
     );
   }
   return card;
@@ -294,21 +295,7 @@ export default async function TabellonePage({
       {/* ─── Mobile: round chips + match cards (hidden on lg+) ─────────── */}
       <div className="lg:hidden">
         <div className="-mx-4 px-4">
-          <div className="flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide">
-            {MOBILE_ROUNDS.map((r) => (
-              <Link
-                key={r}
-                href={`?round=${r}`}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedRound === r
-                    ? 'bg-[#e87425] text-white'
-                    : 'bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]'
-                }`}
-              >
-                {ROUND_LABELS[r]}
-              </Link>
-            ))}
-          </div>
+          <TabelloneRoundChips rounds={MOBILE_ROUNDS} selectedRound={selectedRound} />
         </div>
         <div className="flex flex-col gap-3">
           {mobilePairs.map((pair, i) => (

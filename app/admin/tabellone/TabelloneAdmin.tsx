@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { TeamSelect } from '@/components/ui/TeamSelect';
+import { LoadingButton } from '@/components/ui/LoadingButton';
 import { getKnockoutPlaceholderLabel } from '@/lib/bracketLabels';
 import type { Round, Team, KnockoutSlotWithDetails } from '@/types/tournament';
 import type { R16MatchSlot } from '@/db/queries/knockout';
@@ -286,25 +287,26 @@ export function TabelloneAdmin({
           </div>
 
           {!published && !showPublishConfirm && (
-            <button
+            <LoadingButton
               type="button"
               onClick={handlePublishClick}
-              disabled={isPendingPublish}
-              className="bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-60 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+              loading={isPendingPublish}
+              className="bg-[#e87425] hover:bg-[#c55f0a] text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
             >
               Pubblica tabellone
-            </button>
+            </LoadingButton>
           )}
 
           {published && (
-            <button
+            <LoadingButton
               type="button"
               onClick={handleUnpublish}
-              disabled={isPendingPublish}
-              className="bg-red-900 hover:bg-red-800 disabled:opacity-60 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+              loading={isPendingPublish}
+              loadingText="Aggiornamento…"
+              className="bg-red-900 hover:bg-red-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
             >
-              {isPendingPublish ? 'Aggiornamento…' : 'Nascondi tabellone'}
-            </button>
+              Nascondi tabellone
+            </LoadingButton>
           )}
         </div>
 
@@ -314,14 +316,15 @@ export function TabelloneAdmin({
               Una volta pubblicato il tabellone sarà visibile a tutti. Confermi?
             </p>
             <div className="flex gap-2 flex-shrink-0">
-              <button
+              <LoadingButton
                 type="button"
                 onClick={handleConfirmPublish}
-                disabled={isPendingPublish}
-                className="bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-60 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                loading={isPendingPublish}
+                loadingText="Pubblicazione…"
+                className="bg-[#e87425] hover:bg-[#c55f0a] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
               >
-                {isPendingPublish ? 'Pubblicazione…' : 'Sì, pubblica'}
-              </button>
+                Sì, pubblica
+              </LoadingButton>
               <button
                 type="button"
                 onClick={() => setShowPublishConfirm(false)}
@@ -453,14 +456,16 @@ export function TabelloneAdmin({
             </p>
           )}
         </div>
-        <button
+        <LoadingButton
           type="button"
           onClick={handleSave}
-          disabled={isPendingSave || !allAssigned}
+          loading={isPendingSave}
+          loadingText="Salvataggio…"
+          disabled={!allAssigned}
           className="bg-[#e87425] hover:bg-[#c55f0a] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors flex-shrink-0"
         >
-          {isPendingSave ? 'Salvataggio…' : 'Salva tabellone'}
-        </button>
+          Salva tabellone
+        </LoadingButton>
       </div>
     </div>
   );

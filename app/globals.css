@@ -72,3 +72,12 @@ body {
   0%, 100% { box-shadow: 0 0 15px rgba(232, 116, 37, 0.35); }
   50% { box-shadow: 0 0 30px rgba(232, 116, 37, 0.65), 0 0 50px rgba(232, 116, 37, 0.2); }
 }
+
+@keyframes navigation-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.animate-navigation-progress {
+  animation: navigation-progress 1s ease-in-out infinite;
+}

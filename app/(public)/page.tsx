@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { MatchDetailLink } from '@/components/navigation/MatchDetailLink';
 import { getLiveMatches, getNextScheduledMatch, getMatchesToday, getLiveMatchGoals, type LiveGoal } from '@/db/queries/matches';
 import { getPodiumData, type PodiumData } from '@/db/queries/podium';
 import { getTournamentState } from '@/lib/tournament';
@@ -22,7 +22,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
   const awayGoals = goals.filter((g) => g.team_id === match.team_away_id);
 
   return (
-    <Link href={`/gironi/${match.id}`} className="block">
+    <MatchDetailLink matchId={match.id} className="block">
       <div className="bg-[var(--card)] border border-[#e87425]/50 rounded-xl p-6 hover:border-[#e87425] transition-colors cursor-pointer">
         <div className="flex items-center justify-center mb-5">
           <span className="inline-flex items-center gap-1.5 bg-[#e87425]/15 text-[#e87425] border border-[#e87425]/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
@@ -77,7 +77,7 @@ function LiveMatchCard({ match, goals }: { match: MatchWithTeams; goals: LiveGoa
           </div>
         )}
       </div>
-    </Link>
+    </MatchDetailLink>
   );
 }
 
@@ -96,7 +96,7 @@ function NextMatchCard({ match }: { match: MatchWithTeams }) {
   });
 
   return (
-    <Link href={`/gironi/${match.id}`} className="block">
+    <MatchDetailLink matchId={match.id} className="block">
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-[#e87425]/50 transition-colors cursor-pointer">
         <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide mb-4">
           Prossima partita · {roundLabel}
@@ -118,7 +118,7 @@ function NextMatchCard({ match }: { match: MatchWithTeams }) {
           {dateStr} · {timeStr}
         </p>
       </div>
-    </Link>
+    </MatchDetailLink>
   );
 }
 

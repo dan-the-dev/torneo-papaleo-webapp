@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/auth';
 import { getDashboardStats } from '@/db/queries/matches';
-import Link from 'next/link';
+import { LoadingLink } from '@/components/navigation/LoadingLink';
+import { AdminDashboardLinks, AdminMatchWidgetLink } from '@/components/admin/AdminDashboardLinks';
 import type { MatchWithTeams } from '@/types/tournament';
 
 function formatDateTime(date: Date): string {
@@ -48,12 +49,7 @@ function MatchWidget({ label, match, live = false }: {
             </p>
           )}
         </div>
-        <Link
-          href={`/admin/partite/${match.id}`}
-          className="bg-[#e87425] hover:bg-[#c55f0a] text-white text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-        >
-          {live ? 'Gestisci' : 'Inserisci'}
-        </Link>
+        <AdminMatchWidgetLink match={match} live={live} />
       </div>
     </div>
   );
@@ -75,12 +71,13 @@ export default async function AdminDashboard() {
             </p>
           </div>
         </div>
-        <Link
+        <LoadingLink
           href="/"
+          showSpinner
           className="flex-shrink-0 text-xs text-[#e87425] hover:text-white transition-colors pt-0.5"
         >
           Vai al sito →
-        </Link>
+        </LoadingLink>
       </div>
 
       <h1 className="text-2xl font-bold text-white mb-6">Dashboard</h1>
@@ -115,21 +112,7 @@ export default async function AdminDashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
-          { href: '/admin/partite', label: 'Gestisci partite', icon: '⚽', desc: 'Inserisci risultati e marcatori' },
-          { href: '/tabellone', label: 'Tabellone', icon: '🏆', desc: 'Visualizza il tabellone (aggiornamento automatico)' },
-          { href: '/', label: 'Visualizza sito', icon: '👁️', desc: 'Area pubblica del torneo' },
-        ].map((card) => (
-          <Link key={card.href} href={card.href} className="block">
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 hover:border-[#e87425]/50 transition-colors">
-              <div className="text-2xl mb-2">{card.icon}</div>
-              <p className="font-semibold text-white text-sm">{card.label}</p>
-              <p className="text-xs text-[var(--muted)] mt-0.5">{card.desc}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <AdminDashboardLinks />
     </div>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { LoadingLink } from '@/components/navigation/LoadingLink';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -29,10 +29,11 @@ function NavLinks({
   return (
     <nav className="flex-1 px-3 py-2">
       {navLinks.map((l) => (
-        <Link
+        <LoadingLink
           key={l.href}
           href={l.href}
           {...(onLinkClick ? { onClick: onLinkClick } : {})}
+          showSpinner
           className={`flex items-center px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-colors ${
             isActive(l.href, pathname)
               ? 'bg-[#e87425] text-white'
@@ -40,7 +41,7 @@ function NavLinks({
           }`}
         >
           {l.label}
-        </Link>
+        </LoadingLink>
       ))}
     </nav>
   );
@@ -59,10 +60,10 @@ export function Sidebar() {
       {/* ─── Desktop sidebar ─────────────────────────────────── */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full w-[220px] bg-[var(--background)] border-r border-[var(--border)] z-40">
         <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
-          <Link href="/">
+          <LoadingLink href="/">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="Ardor Bollate" className="h-10 w-auto" />
-          </Link>
+          </LoadingLink>
           <ThemeToggle />
         </div>
         <NavLinks pathname={pathname} />
@@ -70,7 +71,7 @@ export function Sidebar() {
           <p className="text-xs text-[var(--muted)] leading-relaxed">
             Torneo Andrea Papaleo 2026
           </p>
-          <Link
+          <LoadingLink
             href="/privacy"
             className={`text-xs transition-colors ${
               pathname === '/privacy'
@@ -79,16 +80,16 @@ export function Sidebar() {
             }`}
           >
             Privacy
-          </Link>
+          </LoadingLink>
         </div>
       </aside>
 
       {/* ─── Mobile top bar ──────────────────────────────────── */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--background)] border-b border-[var(--border)] flex items-center justify-between px-4 h-14">
-        <Link href="/" onClick={close}>
+        <LoadingLink href="/" onClick={close}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Ardor Bollate" className="h-8 w-auto" />
-        </Link>
+        </LoadingLink>
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <button
@@ -121,10 +122,10 @@ export function Sidebar() {
           />
           <aside className="md:hidden flex flex-col fixed left-0 top-0 h-full w-[220px] z-50 bg-[var(--background)] border-r border-[var(--border)]">
             <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
-              <Link href="/" onClick={close}>
+              <LoadingLink href="/" onClick={close}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="Ardor Bollate" className="h-8 w-auto" />
-              </Link>
+              </LoadingLink>
               <button
                 onClick={close}
                 aria-label="Chiudi menu"
@@ -146,7 +147,7 @@ export function Sidebar() {
             <NavLinks pathname={pathname} onLinkClick={close} />
             <div className="px-5 py-4 border-t border-[var(--border)] space-y-1">
               <p className="text-xs text-[var(--muted)]">Torneo Andrea Papaleo 2026</p>
-              <Link
+              <LoadingLink
                 href="/privacy"
                 onClick={close}
                 className={`text-xs transition-colors ${
@@ -156,7 +157,7 @@ export function Sidebar() {
                 }`}
               >
                 Privacy
-              </Link>
+              </LoadingLink>
             </div>
           </aside>
         </>

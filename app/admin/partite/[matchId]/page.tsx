@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
+import { AdminBackLink } from '@/components/admin/AdminBackLink';
 import { requireAdmin } from '@/lib/auth';
 import { getMatchById } from '@/db/queries/matches';
 import { getPlayersByTeam } from '@/db/queries/players';
@@ -43,12 +43,7 @@ export default async function AdminMatchPage({
   return (
     <>
       <div className="flex items-center gap-2 py-3 text-sm flex-wrap">
-        <Link
-          href="/admin/partite"
-          className="text-[var(--muted)] hover:text-white transition-colors"
-        >
-          ← Partite
-        </Link>
+        <AdminBackLink href="/admin/partite">← Partite</AdminBackLink>
         <span className="text-[var(--border)]">/</span>
         <span className="text-white font-medium">
           {match.team_home.name} vs {match.team_away.name}
