@@ -21,7 +21,7 @@ export const TEAMS: TeamSeed[] = [
   ) },
   { name: 'CRAZY TEAM',                  short_name: 'CRZ', players: players(
     'Nicola Sbarbaro', 'Cristian Giulio Tosarello', 'Federico Rapillo', 'Luca Di Luciano',
-    'Federico Giuseppe Bertoni', 'Davide Gasparini', 'Simone Santonocito', 'Gabriele Codarri',
+    'Federico Giuseppe Bertoni', 'Davide Gasparini', 'Simone Santonocito', 'Gabriele Codarri', 'Andrea Loiodice',
   ) },
   { name: 'SQUADRA NERA',                short_name: 'SNR', players: players(
     'João Pedro Kirsch Giroletti', 'Simone Passerini', 'Tamim Alsaid', 'Manuel Distefano',
