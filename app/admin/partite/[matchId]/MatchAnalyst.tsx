@@ -16,9 +16,192 @@ import {
   saveNotesAction,
   startMatchAction,
   finishMatchAction,
+  addPlayerAction,
   type AddEventResult,
   type StartMatchActionResult,
 } from './actions';
+
+const MAX_ROSTER = 10;
+
+// ─── AddPlayerForm ────────────────────────────────────────────────────────────
+
+function AddPlayerForm({
+  team,
+  matchId,
+  onAdded,
+}: {
+  team: Team;
+  matchId: number;
+  onAdded: (player: Player, warning?: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function close() {
+    setOpen(false);
+    setName('');
+    setError(null);
+  }
+
+  function handleSubmit() {
+    if (isPending) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await addPlayerAction(matchId, team.id, name);
+      if (result.kind === 'ok') {
+        onAdded(result.player, result.warning);
+        close();
+      } else {
+        setError(result.message);
+      }
+    });
+  }
+
+  if (!open) {
+    return (
+      <div className="p-3 border-t border-dashed border-[var(--border)] shrink-0">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-lg border border-dashed border-[var(--border)] text-sm font-medium text-[var(--muted)] hover:text-white hover:border-[#e87425]/50 hover:bg-[#e87425]/5 transition-colors"
+        >
+          <span className="text-base leading-none">+</span>
+          Aggiungi giocatore
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 border-t border-dashed border-[#e87425]/40 bg-[#e87425]/5 shrink-0 space-y-2">
+      <p className="text-xs font-medium text-white">Giocatore mancante in lista</p>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') handleSubmit();
+          if (e.key === 'Escape') close();
+        }}
+        autoFocus
+        placeholder="Nome e cognome"
+        className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[var(--muted)] focus:outline-none focus:border-[#e87425]"
+      />
+      {error !== null && <p className="text-xs text-red-400">{error}</p>}
+      <div className="flex gap-2">
+        <LoadingButton
+          type="button"
+          onClick={handleSubmit}
+          loading={isPending}
+          loadingText="Aggiungo…"
+          className="flex-1 bg-[#e87425] hover:bg-[#c55f0a] text-white font-semibold py-2 rounded-lg text-sm transition-colors"
+        >
+          Aggiungi in rosa
+        </LoadingButton>
+        <button
+          type="button"
+          onClick={close}
+          disabled={isPending}
+          className="text-sm text-[var(--muted)] hover:text-white transition-colors px-2 shrink-0 disabled:opacity-50"
+        >
+          Annulla
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── TeamRoster ───────────────────────────────────────────────────────────────
+
+function TeamRoster({
+  team,
+  players,
+  matchId,
+  homeTeamId,
+  awayTeamId,
+  isHome,
+  onPlayersChange,
+  onGoalStart,
+  onEventAdded,
+}: {
+  team: Team;
+  players: Player[];
+  matchId: number;
+  homeTeamId: number;
+  awayTeamId: number;
+  isHome: boolean;
+  onPlayersChange: (players: Player[]) => void;
+  onGoalStart: (player: Player, team: Team) => void;
+  onEventAdded: (
+    result: AddEventResult & { kind: 'ok' },
+    player: Player,
+    team: Team,
+    minute: number | null,
+  ) => void;
+}) {
+  const [rosterWarning, setRosterWarning] = useState<string | null>(null);
+  const overLimit = players.length > MAX_ROSTER;
+
+  function handlePlayerAdded(player: Player, warning?: string) {
+    onPlayersChange([...players, player]);
+    if (warning) {
+      setRosterWarning(warning);
+      window.setTimeout(() => setRosterWarning(null), 6000);
+    }
+  }
+
+  return (
+    <div className={`flex flex-col min-h-0 ${isHome ? 'order-2 lg:order-1 border-b border-[var(--border)] lg:border-b-0 lg:border-r' : 'order-3'}`}>
+      <div
+        className={`px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 ${
+          isHome ? 'border-l-[#e87425] bg-[#e87425]/10' : 'border-l-white/30 bg-[#141414]'
+        }`}
+      >
+        <div
+          className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+            isHome ? 'bg-[#e87425] border-2 border-[#141414]' : 'bg-[#141414] border-2 border-[#e87425]'
+          }`}
+        />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-bold text-white text-sm truncate">{team.name}</h2>
+          <p className={`text-[10px] mt-0.5 ${overLimit ? 'text-yellow-400' : 'text-[var(--muted)]'}`}>
+            {players.length} in rosa{overLimit ? ` (max ${MAX_ROSTER} + extra)` : ''}
+          </p>
+        </div>
+      </div>
+      {rosterWarning !== null && (
+        <p className="px-3 py-2 text-xs text-yellow-400 bg-yellow-400/10 border-b border-yellow-400/20 shrink-0">
+          ⚠️ {rosterWarning}
+        </p>
+      )}
+      <div className="overflow-y-auto flex-1 min-h-0">
+        {players.length === 0 ? (
+          <p className="px-3 py-4 text-xs text-[var(--muted)] text-center">Nessun giocatore in rosa</p>
+        ) : (
+          players.map((player) => (
+            <PlayerRow
+              key={player.id}
+              player={player}
+              team={team}
+              matchId={matchId}
+              homeTeamId={homeTeamId}
+              awayTeamId={awayTeamId}
+              onGoalStart={onGoalStart}
+              onEventAdded={onEventAdded}
+            />
+          ))
+        )}
+      </div>
+      <AddPlayerForm
+        team={team}
+        matchId={matchId}
+        onAdded={handlePlayerAdded}
+      />
+    </div>
+  );
+}
 
 // ─── PlayerRow ────────────────────────────────────────────────────────────────
 
@@ -122,9 +305,12 @@ type ScoreboardOptimisticAction =
 
 export function MatchAnalyst({
   match,
-  homePlayers,
-  awayPlayers,
+  homePlayers: initialHomePlayers,
+  awayPlayers: initialAwayPlayers,
 }: MatchAnalystProps) {
+  const [homePlayers, setHomePlayers] = useState(initialHomePlayers);
+  const [awayPlayers, setAwayPlayers] = useState(initialAwayPlayers);
+
   const [scoreboard, setScoreboard] = useState<ScoreboardState>({
     scoreHome: match.score_home ?? 0,
     scoreAway: match.score_away ?? 0,
@@ -277,28 +463,17 @@ export function MatchAnalyst({
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px_1fr] -mx-4 border-t border-[var(--border)] lg:h-[calc(100vh-8rem)] lg:overflow-hidden">
 
       {/* ─── Left column: home team (mobile: 2nd) ────────────────── */}
-      <div className="flex flex-col min-h-0 order-2 lg:order-1 border-b border-[var(--border)] lg:border-b-0 lg:border-r">
-        <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-[#e87425] bg-[#e87425]/10">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#e87425] border-2 border-[#141414]" />
-          <h2 className="font-bold text-white text-sm truncate">
-            {match.team_home.name}
-          </h2>
-        </div>
-        <div className="overflow-y-auto flex-1 min-h-0">
-          {homePlayers.map((player) => (
-            <PlayerRow
-              key={player.id}
-              player={player}
-              team={match.team_home}
-              matchId={match.id}
-              homeTeamId={match.team_home_id}
-              awayTeamId={match.team_away_id}
-              onGoalStart={handleGoalStart}
-              onEventAdded={handleEventAdded}
-            />
-          ))}
-        </div>
-      </div>
+      <TeamRoster
+        team={match.team_home}
+        players={homePlayers}
+        matchId={match.id}
+        homeTeamId={match.team_home_id}
+        awayTeamId={match.team_away_id}
+        isHome
+        onPlayersChange={setHomePlayers}
+        onGoalStart={handleGoalStart}
+        onEventAdded={handleEventAdded}
+      />
 
       {/* ─── Center column: controls (mobile: 1st) ───────────────── */}
       <div className="flex flex-col min-h-0 order-1 lg:order-2 border-b border-[var(--border)] lg:border-b-0 lg:border-r">
@@ -498,28 +673,17 @@ export function MatchAnalyst({
       </div>
 
       {/* ─── Right column: away team (mobile: 3rd) ───────────────── */}
-      <div className="flex flex-col min-h-0 order-3">
-        <div className="px-4 py-3 border-b border-[var(--border)] shrink-0 flex items-center gap-2.5 border-l-4 border-l-white/30 bg-[#141414]">
-          <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-[#141414] border-2 border-[#e87425]" />
-          <h2 className="font-bold text-white text-sm truncate">
-            {match.team_away.name}
-          </h2>
-        </div>
-        <div className="overflow-y-auto flex-1 min-h-0">
-          {awayPlayers.map((player) => (
-            <PlayerRow
-              key={player.id}
-              player={player}
-              team={match.team_away}
-              matchId={match.id}
-              homeTeamId={match.team_home_id}
-              awayTeamId={match.team_away_id}
-              onGoalStart={handleGoalStart}
-              onEventAdded={handleEventAdded}
-            />
-          ))}
-        </div>
-      </div>
+      <TeamRoster
+        team={match.team_away}
+        players={awayPlayers}
+        matchId={match.id}
+        homeTeamId={match.team_home_id}
+        awayTeamId={match.team_away_id}
+        isHome={false}
+        onPlayersChange={setAwayPlayers}
+        onGoalStart={handleGoalStart}
+        onEventAdded={handleEventAdded}
+      />
 
     </div>
   );

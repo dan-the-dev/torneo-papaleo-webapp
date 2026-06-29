@@ -244,3 +244,93 @@ export async function finishMatchAction(
     return { kind: 'error', message: 'Errore durante la chiusura della partita' };
   }
 }
+
+// ─── Roster ───────────────────────────────────────────────────────────────────
+
+const MAX_ROSTER_PLAYERS = 10;
+
+export type AddPlayerResult =
+  | {
+      kind: 'ok';
+      player: { id: number; team_id: number; name: string; number: number | null };
+      warning?: string;
+    }
+  | { kind: 'error'; message: string };
+
+export async function addPlayerAction(
+  matchId: number,
+  teamId: number,
+  name: string,
+): Promise<AddPlayerResult> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { kind: 'error', message: 'Non autorizzato' };
+  }
+
+  const trimmed = name.trim().replace(/\s+/g, ' ');
+  if (trimmed.length < 2) {
+    return { kind: 'error', message: 'Inserisci nome e cognome' };
+  }
+
+  const client = await pool.connect();
+  try {
+    const { rows: matchRows } = await client.query<{
+      team_home_id: number;
+      team_away_id: number;
+    }>('SELECT team_home_id, team_away_id FROM matches WHERE id = $1', [matchId]);
+
+    const matchRow = matchRows[0];
+    if (!matchRow) {
+      return { kind: 'error', message: 'Partita non trovata' };
+    }
+    if (teamId !== matchRow.team_home_id && teamId !== matchRow.team_away_id) {
+      return { kind: 'error', message: 'Squadra non valida per questa partita' };
+    }
+
+    const { rowCount: duplicateCount } = await client.query(
+      'SELECT 1 FROM players WHERE team_id = $1 AND LOWER(TRIM(name)) = LOWER($2) LIMIT 1',
+      [teamId, trimmed],
+    );
+    if (duplicateCount && duplicateCount > 0) {
+      return { kind: 'error', message: 'Questo giocatore è già in rosa' };
+    }
+
+    const { rows: countRows } = await client.query<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM players WHERE team_id = $1',
+      [teamId],
+    );
+    const currentCount = parseInt(countRows[0]?.count ?? '0', 10);
+
+    const { rows: inserted } = await client.query<{
+      id: number;
+      team_id: number;
+      name: string;
+      number: number | null;
+    }>(
+      'INSERT INTO players (team_id, name, number) VALUES ($1, $2, NULL) RETURNING id, team_id, name, number',
+      [teamId, trimmed],
+    );
+    const player = inserted[0];
+    if (!player) {
+      return { kind: 'error', message: "Errore durante l'inserimento" };
+    }
+
+    revalidatePath(`/admin/partite/${matchId}`);
+
+    const warning =
+      currentCount >= MAX_ROSTER_PLAYERS
+        ? `Rosa oltre il massimo di ${MAX_ROSTER_PLAYERS} giocatori (regolamento: +20 € per ogni extra)`
+        : undefined;
+
+    if (warning) {
+      return { kind: 'ok', player, warning };
+    }
+    return { kind: 'ok', player };
+  } catch (err) {
+    console.error(err);
+    return { kind: 'error', message: "Errore durante l'inserimento" };
+  } finally {
+    client.release();
+  }
+}
