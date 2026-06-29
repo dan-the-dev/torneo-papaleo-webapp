@@ -11,7 +11,9 @@
     "db:seed:base": "npx tsx db/seeds/seed-base.ts",
     "db:seed:reset": "npx tsx --env-file .env.local db/seeds/seed-reset.ts && npx tsx --env-file .env.local db/seeds/seed-base.ts",
     "db:seed:groups-done": "npx tsx --env-file .env.local db/seeds/seed-groups-done.ts",
-    "db:seed:finished": "npx tsx --env-file .env.local db/seeds/seed-finished.ts"
+    "db:seed:finished": "npx tsx --env-file .env.local db/seeds/seed-finished.ts",
+    "db:sync:rosters": "npx tsx --env-file .env.local db/seeds/sync-rosters.ts",
+    "db:sync:rosters:prod": "NODE_ENV=production npx tsx --env-file .env.production.local db/seeds/sync-rosters.ts"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
