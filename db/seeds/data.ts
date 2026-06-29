@@ -18,6 +18,7 @@ export const TEAMS: TeamSeed[] = [
   { name: 'FC INGIOCABILI (FORSE)',       short_name: 'ING', players: players(
     'Davide Papaleo', 'Marco Conti', 'Gabriele De Filippis', 'Pietro Renato Masciullo',
     'Lorenzo Ferrari', 'Federico Pasqualotto', 'Emanuele Ranieri', 'Giorgio Del Gaudio',
+    'Ruperto Alessandro'
   ) },
   { name: 'CRAZY TEAM',                  short_name: 'CRZ', players: players(
     'Nicola Sbarbaro', 'Cristian Giulio Tosarello', 'Federico Rapillo', 'Luca Di Luciano',
