@@ -60,7 +60,7 @@ export const TEAMS: TeamSeed[] = [
     'Mirko De Patto', 'Riccardo Brazzoli', 'Christian Della Foglia', 'Valentin Triboi',
   ) },
   { name: 'GARPEZ UNITED',              short_name: 'GAR', players: players(
-    'Gionatan Casati', 'Diego Marazzi', 'Matteo Baldo', 'Andrea Borroni',
+    'Gionatan Casati', 'Diego Marazzi', 'Niccolò Englaro', 'Andrea Borroni',
     'Gabriele Mingrone', 'Daniele Scillia', 'Riccardo Vincent Conti', 'Antonio Mingrone',
     'Tommaso Dezuanni', 'Abdellah Ouanchi',
   ) },
@@ -94,13 +94,13 @@ export const GROUP_MATCHES: Array<{
   // Serata 1 — 29 giugno 2025
   { matchNumber:  1, home: "LASSU' FC",               away: 'FC INGIOCABILI (FORSE)',      scheduledAt: '2025-06-29T20:00:00+02:00' },
   { matchNumber:  2, home: 'CRAZY TEAM',               away: 'SQUADRA NERA',                scheduledAt: '2025-06-29T20:30:00+02:00' },
-  { matchNumber:  3, home: 'F.C. MURETTI',             away: 'LA CASETTA FC',               scheduledAt: '2025-06-29T21:00:00+02:00' },
+  { matchNumber:  3, home: 'I CRACKS',                 away: 'LA CASETTA FC',               scheduledAt: '2025-06-29T21:00:00+02:00' },
   { matchNumber:  4, home: "FC. AL LHUNEDI'",          away: 'CRAZY TEAM',                  scheduledAt: '2025-06-29T21:30:00+02:00' },
   { matchNumber:  5, home: 'LA CASETTA FC',            away: 'FC INGIOCABILI (FORSE)',      scheduledAt: '2025-06-29T22:00:00+02:00' },
   { matchNumber:  6, home: "FC. AL LHUNEDI'",          away: 'F.C. PACHA',                  scheduledAt: '2025-06-29T22:30:00+02:00' },
   // Serata 2 — 1 luglio 2025
   { matchNumber:  7, home: 'AS SONION',                away: 'F.C. PACHA',                  scheduledAt: '2025-07-01T19:30:00+02:00' },
-  { matchNumber:  8, home: 'I CRACKS',                 away: 'LA CASETTA FC',               scheduledAt: '2025-07-01T20:00:00+02:00' },
+  { matchNumber:  8, home: 'F.C. MURETTI',             away: 'LA CASETTA FC',               scheduledAt: '2025-07-01T20:00:00+02:00' },
   { matchNumber:  9, home: 'BLOCCO-02',                away: 'GARPEZ UNITED',               scheduledAt: '2025-07-01T20:30:00+02:00' },
   { matchNumber: 10, home: 'TRANCIO SICILIANO',        away: 'VERDE E GIARDINI MONDELLO',   scheduledAt: '2025-07-01T21:00:00+02:00' },
   { matchNumber: 11, home: 'GARPEZ UNITED',            away: "FC. AL LHUNEDI'",             scheduledAt: '2025-07-01T21:30:00+02:00' },
